@@ -1,6 +1,7 @@
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { MentorEmbedPreview } from "@/components/tracks/MentorEmbedPreview";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 import { StageElement } from "@/lib/types/database";
 import {
@@ -149,37 +150,20 @@ function TaskListPreview({ settings }: { settings: Record<string, unknown> }) {
 }
 
 function AiMentorPreview({ settings }: { settings: Record<string, unknown> }) {
+  const mentorName = asString(settings.mentor_name);
   const purpose = asString(settings.mentor_purpose);
-  const prompts = asStringArray(settings.suggested_prompts, 3).filter(Boolean);
-  const mentorUrl = asString(settings.mentor_url);
-  const buttonText = asString(settings.button_text, "Open AI Mentor");
+  const embedCode = asString(settings.embed_code);
 
   return (
     <div className="space-y-3 text-sm">
+      {mentorName && (
+        <p className="font-medium text-gray-900">{mentorName}</p>
+      )}
       {purpose && <p className="text-gray-600">{purpose}</p>}
-      {prompts.length > 0 && (
-        <ul className="space-y-1">
-          {prompts.map((prompt, index) => (
-            <li key={index} className="text-gray-500 italic">
-              &ldquo;{prompt}&rdquo;
-            </li>
-          ))}
-        </ul>
-      )}
-      {mentorUrl ? (
-        <a
-          href={mentorUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors px-3 py-1.5 text-sm bg-violet-600 text-white hover:bg-violet-700 shadow-sm"
-        >
-          {buttonText}
-        </a>
-      ) : (
-        <Button variant="accent" size="sm" disabled className="opacity-60">
-          {buttonText}
-        </Button>
-      )}
+      <MentorEmbedPreview
+        embedCode={embedCode}
+        emptyMessage="AI Mentor embed coming soon."
+      />
     </div>
   );
 }

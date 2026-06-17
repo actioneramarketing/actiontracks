@@ -53,17 +53,11 @@ export const ELEMENT_DEFAULTS: Record<StageElementType, ElementDefaults> = {
   ai_mentor: {
     title: "AI Mentor",
     description:
-      "Provide AI-powered support, brainstorming, feedback, or guidance for this stage.",
+      "Embed an AI Mentor from Mentor Studio to support participants through this stage.",
     settings_json: {
       mentor_name: "",
-      mentor_url: "",
-      button_text: "Open AI Mentor",
       mentor_purpose: "",
-      suggested_prompts: [
-        "Help me get clarity on this stage.",
-        "Review my work and suggest improvements.",
-        "Help me create my next action plan.",
-      ],
+      embed_code: "",
     },
   },
   reflection_journal: {

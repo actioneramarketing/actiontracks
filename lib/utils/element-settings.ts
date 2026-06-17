@@ -42,19 +42,12 @@ export function parseElementSettingsFromForm(
       }
       return { tasks };
     }
-    case "ai_mentor": {
-      const suggested_prompts = [];
-      for (let i = 0; i < 3; i++) {
-        suggested_prompts.push(str(formData, `prompt_${i}`));
-      }
+    case "ai_mentor":
       return {
         mentor_name: str(formData, "mentor_name"),
-        mentor_url: str(formData, "mentor_url"),
-        button_text: str(formData, "button_text"),
         mentor_purpose: str(formData, "mentor_purpose"),
-        suggested_prompts,
+        embed_code: str(formData, "embed_code"),
       };
-    }
     case "reflection_journal":
       return {
         prompt: str(formData, "prompt"),

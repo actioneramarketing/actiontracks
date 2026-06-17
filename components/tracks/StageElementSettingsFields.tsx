@@ -1,4 +1,5 @@
 import { StageElementType } from "@/lib/types/database";
+import { AiMentorSettingsFields } from "@/components/tracks/AiMentorSettingsFields";
 import {
   asResourceArray,
   asString,
@@ -23,7 +24,7 @@ export function StageElementSettingsFields({
     case "task_list":
       return <TaskListFields settings={settings} />;
     case "ai_mentor":
-      return <AiMentorFields settings={settings} />;
+      return <AiMentorSettingsFields settings={settings} />;
     case "reflection_journal":
       return <ReflectionJournalFields settings={settings} />;
     case "resources":
@@ -156,27 +157,6 @@ function TaskListFields({ settings }: { settings: Record<string, unknown> }) {
             <Checkbox label="Required" name={`task_${index}_required`} defaultChecked={task.required} />
           </div>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function AiMentorFields({ settings }: { settings: Record<string, unknown> }) {
-  const prompts = asStringArray(settings.suggested_prompts, 3);
-  return (
-    <div className="space-y-3">
-      <Field label="Mentor Name" name="mentor_name" defaultValue={asString(settings.mentor_name)} />
-      <Field label="Mentor URL" name="mentor_url" defaultValue={asString(settings.mentor_url)} />
-      <Field label="Button Text" name="button_text" defaultValue={asString(settings.button_text, "Open AI Mentor")} />
-      <Field label="Mentor Purpose" name="mentor_purpose" defaultValue={asString(settings.mentor_purpose)} textarea />
-      {prompts.map((prompt, index) => (
-        <Field
-          key={index}
-          label={`Suggested Prompt ${index + 1}`}
-          name={`prompt_${index}`}
-          defaultValue={prompt}
-          textarea
-        />
       ))}
     </div>
   );
