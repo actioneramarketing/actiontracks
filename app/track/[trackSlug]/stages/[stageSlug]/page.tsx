@@ -1,3 +1,4 @@
+import { ParticipantElementCard } from "@/components/tracks/ParticipantElementCard";
 import { PageContainer } from "@/components/layout/Nav";
 import { GuideProfileCard } from "@/components/tracks/GuideProfileCard";
 import { SidebarCard } from "@/components/tracks/SidebarCard";
@@ -6,7 +7,6 @@ import { Card } from "@/components/ui/Card";
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStageBySlug, getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
-import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 
 interface PageProps {
   params: Promise<{ trackSlug: string; stageSlug: string }>;
@@ -91,22 +91,7 @@ export default async function ParticipantStagePage({ params }: PageProps) {
               </Card>
             ) : (
               enabledElements.map((el) => (
-                <Card key={el.id} padding="sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        {el.title ?? ELEMENT_TYPE_LABELS[el.element_type]}
-                      </h4>
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        {el.description ??
-                          `${ELEMENT_TYPE_LABELS[el.element_type]} for this stage.`}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 capitalize bg-teal-50 text-teal-700 ring-teal-200">
-                      {el.is_required ? "required" : "available"}
-                    </span>
-                  </div>
-                </Card>
+                <ParticipantElementCard key={el.id} element={el} />
               ))
             )}
           </div>

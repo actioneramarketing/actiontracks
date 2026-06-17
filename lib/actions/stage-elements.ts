@@ -5,12 +5,16 @@ import {
   SupabaseConfigError,
   tryCreateAdminClient,
 } from "@/lib/supabase/admin";
-import {
-  ELEMENT_TYPE_LABELS,
-  isStageElementType,
-} from "@/lib/constants/element-types";
+import { getElementDefaults } from "@/lib/constants/element-defaults";
+import { isStageElementType } from "@/lib/constants/element-types";
 import { StageElement, StageElementType } from "@/lib/types/database";
+import { parseElementSettingsFromForm } from "@/lib/utils/element-settings";
 import { revalidatePath } from "next/cache";
+
+function revalidateStageElementPaths(trackId: string, stageId: string) {
+  revalidatePath(`/guide/tracks/${trackId}/stages/${stageId}`);
+  revalidatePath(`/guide/tracks/${trackId}/stages`);
+}
 
 export async function getElementsForStage(stageId: string): Promise<{
   elements: StageElement[];
@@ -29,8 +33,8 @@ export async function getElementsForStage(stageId: string): Promise<{
     const { data, error } = await supabase
       .from("stage_elements")
       .select("*")
-      .eq("action_track_stage_id", stageId)
-      .order("display_order", { ascending: true });
+      .eq("stage_id", stageId)
+      .order("sort_order", { ascending: true });
 
     if (error) {
       return { elements: [], error: error.message };
@@ -56,31 +60,32 @@ export async function createStageElement(
   }
 
   const supabase = createAdminClient();
+  const type = elementType as StageElementType;
+  const defaults = getElementDefaults(type);
 
   const { data: existingElements, error: existingError } = await supabase
     .from("stage_elements")
-    .select("display_order")
-    .eq("action_track_stage_id", stageId)
-    .order("display_order", { ascending: false })
+    .select("sort_order")
+    .eq("stage_id", stageId)
+    .order("sort_order", { ascending: false })
     .limit(1);
 
   if (existingError) {
     throw new Error(existingError.message);
   }
 
-  const nextOrder = (existingElements?.[0]?.display_order ?? 0) + 1;
-  const defaultTitle = ELEMENT_TYPE_LABELS[elementType as StageElementType];
+  const nextOrder = (existingElements?.[0]?.sort_order ?? 0) + 1;
 
   const payload = {
-    action_track_stage_id: stageId,
-    action_track_id: trackId,
+    stage_id: stageId,
+    track_id: trackId,
     element_type: elementType,
-    title: defaultTitle,
-    description: null,
+    title: defaults.title,
+    description: defaults.description,
     is_required: false,
     is_enabled: true,
-    settings_json: {},
-    display_order: nextOrder,
+    settings_json: defaults.settings_json,
+    sort_order: nextOrder,
   };
 
   const { error } = await supabase.from("stage_elements").insert(payload);
@@ -89,7 +94,7 @@ export async function createStageElement(
     throw new Error(error.message);
   }
 
-  revalidatePath(`/guide/tracks/${trackId}/stages/${stageId}`);
+  revalidateStageElementPaths(trackId, stageId);
 }
 
 export async function updateStageElement(elementId: string, formData: FormData) {
@@ -97,16 +102,14 @@ export async function updateStageElement(elementId: string, formData: FormData) 
 
   const trackId = String(formData.get("track_id") ?? "").trim();
   const stageId = String(formData.get("stage_id") ?? "").trim();
-  const settingsRaw = String(formData.get("settings_json") ?? "").trim();
+  const elementTypeRaw = String(formData.get("element_type") ?? "").trim();
 
-  let settingsJson: Record<string, unknown> | null = null;
-  if (settingsRaw) {
-    try {
-      settingsJson = JSON.parse(settingsRaw) as Record<string, unknown>;
-    } catch {
-      throw new Error("Settings JSON must be valid JSON.");
-    }
+  if (!isStageElementType(elementTypeRaw)) {
+    throw new Error("Invalid element type.");
   }
+
+  const elementType = elementTypeRaw as StageElementType;
+  const settingsJson = parseElementSettingsFromForm(elementType, formData);
 
   const payload = {
     title: String(formData.get("title") ?? "").trim() || null,
@@ -114,6 +117,7 @@ export async function updateStageElement(elementId: string, formData: FormData) 
     is_required: formData.get("is_required") === "on",
     is_enabled: formData.get("is_enabled") === "on",
     settings_json: settingsJson,
+    updated_at: new Date().toISOString(),
   };
 
   const { error } = await supabase
@@ -126,16 +130,22 @@ export async function updateStageElement(elementId: string, formData: FormData) 
   }
 
   if (trackId && stageId) {
-    revalidatePath(`/guide/tracks/${trackId}/stages/${stageId}`);
+    revalidateStageElementPaths(trackId, stageId);
   }
 }
 
-export async function deleteStageElement(
-  elementId: string,
-  trackId: string,
-  stageId: string
-) {
+export async function deleteStageElement(elementId: string) {
   const supabase = createAdminClient();
+
+  const { data: element, error: fetchError } = await supabase
+    .from("stage_elements")
+    .select("stage_id, track_id")
+    .eq("id", elementId)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(fetchError.message);
+  }
 
   const { error } = await supabase
     .from("stage_elements")
@@ -146,25 +156,37 @@ export async function deleteStageElement(
     throw new Error(error.message);
   }
 
-  revalidatePath(`/guide/tracks/${trackId}/stages/${stageId}`);
+  if (element?.track_id && element?.stage_id) {
+    revalidateStageElementPaths(element.track_id, element.stage_id);
+  }
 }
 
-export async function toggleStageElement(
-  elementId: string,
-  isEnabled: boolean,
-  trackId: string,
-  stageId: string
-) {
+export async function toggleStageElement(elementId: string, isEnabled: boolean) {
   const supabase = createAdminClient();
+
+  const { data: element, error: fetchError } = await supabase
+    .from("stage_elements")
+    .select("stage_id, track_id")
+    .eq("id", elementId)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(fetchError.message);
+  }
 
   const { error } = await supabase
     .from("stage_elements")
-    .update({ is_enabled: isEnabled })
+    .update({
+      is_enabled: isEnabled,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", elementId);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  revalidatePath(`/guide/tracks/${trackId}/stages/${stageId}`);
+  if (element?.track_id && element?.stage_id) {
+    revalidateStageElementPaths(element.track_id, element.stage_id);
+  }
 }

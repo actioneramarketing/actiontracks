@@ -4,6 +4,7 @@ import { updateStage } from "@/lib/actions/stages";
 import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 import { ActionTrack, ActionTrackStage, StageElement } from "@/lib/types/database";
 import { PageContainer } from "@/components/layout/Nav";
+import { StageElementsSection } from "@/components/tracks/StageElementEditor";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
@@ -130,35 +131,11 @@ export function StageBuilderClient({
             </form>
           </Card>
 
-          <Card>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Stage Elements
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Element configuration is coming soon. Existing elements are shown
-              below as placeholders.
-            </p>
-            {elements.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">
-                No elements configured for this stage yet.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {elements.map((el) => (
-                  <span
-                    key={el.id}
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ring-1 ${
-                      el.is_enabled
-                        ? "bg-teal-50 text-teal-700 ring-teal-200"
-                        : "bg-gray-50 text-gray-500 ring-gray-200"
-                    }`}
-                  >
-                    {el.title ?? ELEMENT_TYPE_LABELS[el.element_type]}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Card>
+          <StageElementsSection
+            elements={elements}
+            trackId={trackId}
+            stageId={stageId}
+          />
         </div>
 
         <div className="space-y-6">
@@ -223,7 +200,7 @@ export function StageBuilderClient({
               </li>
               <li className="flex gap-2">
                 <span className="text-teal-600">2.</span>
-                Stage elements will be configurable in a future release.
+                Add and configure support elements for this stage.
               </li>
               <li className="flex gap-2">
                 <span className="text-teal-600">3.</span>

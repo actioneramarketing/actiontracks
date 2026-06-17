@@ -59,16 +59,17 @@ export interface ActionTrackStage {
 
 export interface StageElement {
   id: string;
-  action_track_stage_id: string;
-  action_track_id: string;
+  stage_id: string;
+  track_id: string;
   element_type: StageElementType;
   title: string | null;
   description: string | null;
   is_required: boolean;
   is_enabled: boolean;
   settings_json: Record<string, unknown> | null;
-  display_order: number | null;
+  sort_order: number | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface ActionTrackListItem {
