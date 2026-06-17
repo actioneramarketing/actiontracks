@@ -3,6 +3,7 @@
 import { updateActionTrack } from "@/lib/actions/tracks";
 import { ActionTrack } from "@/lib/types/database";
 import { PageContainer } from "@/components/layout/Nav";
+import { BuilderComingSoonCard } from "@/components/tracks/BuilderComingSoonCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
@@ -167,74 +168,11 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
       )}
 
       {activeTab === "Welcome Page" && (
-        <Card padding="lg">
-          <form action={handleSave} className="space-y-4">
-            <input type="hidden" name="title" value={track.title} />
-            <input type="hidden" name="short_description" value={track.short_description ?? ""} />
-            <input type="hidden" name="primary_outcome" value={track.primary_outcome ?? ""} />
-            <input type="hidden" name="who_this_is_for" value={track.who_this_is_for ?? ""} />
-            <input type="hidden" name="duration_weeks" value={track.duration_weeks ?? ""} />
-            <input type="hidden" name="track_type" value={track.track_type ?? "live_guided"} />
-            <input type="hidden" name="status" value={track.status} />
-            <input type="hidden" name="start_date" value={track.start_date ?? ""} />
-            <input type="hidden" name="end_date" value={track.end_date ?? ""} />
-            <input type="hidden" name="completion_headline" value={track.completion_headline ?? ""} />
-
-            <h3 className="font-semibold text-gray-900 mb-4">Welcome Page Content</h3>
-            <FormField
-              label="Welcome Headline"
-              name="welcome_headline"
-              defaultValue={track.welcome_headline ?? "Welcome to Your Action Track"}
-            />
-            <FormField
-              label="Track Philosophy"
-              name="philosophy"
-              defaultValue={track.philosophy ?? ""}
-              textarea
-            />
-            <div className="pt-4 border-t border-gray-100 flex items-center gap-3">
-              <Button type="submit" variant="primary" disabled={isPending}>
-                {isPending ? "Saving..." : "Save Welcome Content"}
-              </Button>
-              {message && (
-                <span className="text-sm text-gray-600">{message}</span>
-              )}
-            </div>
-          </form>
-        </Card>
+        <BuilderComingSoonCard trackId={trackId} />
       )}
 
       {activeTab === "Completion Page" && (
-        <Card padding="lg">
-          <form action={handleSave} className="space-y-4">
-            <input type="hidden" name="title" value={track.title} />
-            <input type="hidden" name="short_description" value={track.short_description ?? ""} />
-            <input type="hidden" name="primary_outcome" value={track.primary_outcome ?? ""} />
-            <input type="hidden" name="who_this_is_for" value={track.who_this_is_for ?? ""} />
-            <input type="hidden" name="duration_weeks" value={track.duration_weeks ?? ""} />
-            <input type="hidden" name="track_type" value={track.track_type ?? "live_guided"} />
-            <input type="hidden" name="status" value={track.status} />
-            <input type="hidden" name="start_date" value={track.start_date ?? ""} />
-            <input type="hidden" name="end_date" value={track.end_date ?? ""} />
-            <input type="hidden" name="philosophy" value={track.philosophy ?? ""} />
-            <input type="hidden" name="welcome_headline" value={track.welcome_headline ?? ""} />
-
-            <h3 className="font-semibold text-gray-900 mb-4">Completion Page Content</h3>
-            <FormField
-              label="Completion Headline"
-              name="completion_headline"
-              defaultValue={track.completion_headline ?? "Congratulations — You Did It!"}
-            />
-            <div className="pt-4 border-t border-gray-100 flex items-center gap-3">
-              <Button type="submit" variant="primary" disabled={isPending}>
-                {isPending ? "Saving..." : "Save Completion Content"}
-              </Button>
-              {message && (
-                <span className="text-sm text-gray-600">{message}</span>
-              )}
-            </div>
-          </form>
-        </Card>
+        <BuilderComingSoonCard trackId={trackId} />
       )}
 
       {activeTab === "Preview" && (
