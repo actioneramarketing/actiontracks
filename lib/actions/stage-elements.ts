@@ -6,7 +6,11 @@ import {
   tryCreateAdminClient,
 } from "@/lib/supabase/admin";
 import { getElementDefaults } from "@/lib/constants/element-defaults";
-import { isStageElementType } from "@/lib/constants/element-types";
+import {
+  filterBuilderVisibleElements,
+  isAddableStageElementType,
+  isStageElementType,
+} from "@/lib/constants/element-types";
 import { StageElement, StageElementType } from "@/lib/types/database";
 import { parseElementSettingsFromForm } from "@/lib/utils/element-settings";
 import { revalidatePath } from "next/cache";
@@ -73,12 +77,18 @@ export async function createStageElement(
   trackId: string,
   elementType: string
 ): Promise<string> {
-  if (!isStageElementType(elementType)) {
+  if (elementType === "track_feed") {
+    throw new Error(
+      "Track Feed is included automatically on every stage and cannot be added as an element."
+    );
+  }
+
+  if (!isAddableStageElementType(elementType)) {
     throw new Error("Invalid element type.");
   }
 
   const supabase = createAdminClient();
-  const type = elementType as StageElementType;
+  const type = elementType;
   const defaults = getElementDefaults(type);
 
   const { data: existingElements, error: existingError } = await supabase
@@ -237,7 +247,9 @@ export async function moveStageElement(
     throw new Error("Element not found.");
   }
 
-  const elements = await loadOrderedElementsForStage(current.stage_id);
+  const elements = filterBuilderVisibleElements(
+    await loadOrderedElementsForStage(current.stage_id)
+  );
   const currentIndex = elements.findIndex((element) => element.id === elementId);
 
   if (currentIndex === -1) {

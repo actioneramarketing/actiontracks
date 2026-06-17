@@ -1,9 +1,11 @@
 import { ParticipantElementCard } from "@/components/tracks/ParticipantElementCard";
+import { TrackFeedStageSection } from "@/components/tracks/TrackFeedStageSection";
 import { PageContainer } from "@/components/layout/Nav";
 import { GuideProfileCard } from "@/components/tracks/GuideProfileCard";
 import { SidebarCard } from "@/components/tracks/SidebarCard";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { filterBuilderVisibleElements } from "@/lib/constants/element-types";
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStageBySlug, getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
@@ -49,7 +51,9 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     getElementsForStage(stage.id),
   ]);
 
-  const enabledElements = elements.filter((el) => el.is_enabled);
+  const enabledElements = filterBuilderVisibleElements(
+    elements.filter((el) => el.is_enabled)
+  );
 
   return (
     <PageContainer wide>
@@ -95,6 +99,8 @@ export default async function ParticipantStagePage({ params }: PageProps) {
               ))
             )}
           </div>
+
+          <TrackFeedStageSection />
         </div>
 
         <div className="space-y-4">

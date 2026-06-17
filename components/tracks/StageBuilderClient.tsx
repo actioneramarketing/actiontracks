@@ -1,7 +1,10 @@
 "use client";
 
 import { updateStage } from "@/lib/actions/stages";
-import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
+import {
+  ELEMENT_TYPE_LABELS,
+  filterBuilderVisibleElements,
+} from "@/lib/constants/element-types";
 import { ActionTrack, ActionTrackStage, StageElement } from "@/lib/types/database";
 import { PageContainer } from "@/components/layout/Nav";
 import { StageElementsSection } from "@/components/tracks/StageElementEditor";
@@ -45,7 +48,9 @@ export function StageBuilderClient({
     });
   }
 
-  const enabledElements = elements.filter((el) => el.is_enabled);
+  const enabledElements = filterBuilderVisibleElements(
+    elements.filter((el) => el.is_enabled)
+  );
 
   return (
     <PageContainer wide>

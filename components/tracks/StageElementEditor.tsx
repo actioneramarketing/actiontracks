@@ -7,11 +7,13 @@ import {
   updateStageElement,
 } from "@/lib/actions/stage-elements";
 import {
+  ADDABLE_STAGE_ELEMENT_TYPES,
   ELEMENT_TYPE_ICONS,
   ELEMENT_TYPE_LABELS,
-  STAGE_ELEMENT_TYPES,
+  filterBuilderVisibleElements,
+  type AddableStageElementType,
 } from "@/lib/constants/element-types";
-import { StageElement, StageElementType } from "@/lib/types/database";
+import { StageElement } from "@/lib/types/database";
 import { asRecord } from "@/lib/utils/element-settings";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -32,9 +34,11 @@ export function StageElementsSection({
 }: StageElementsSectionProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [elementType, setElementType] = useState<StageElementType>("live_call");
+  const [elementType, setElementType] = useState<AddableStageElementType>("live_call");
   const [sectionError, setSectionError] = useState<string | null>(null);
   const [openElementId, setOpenElementId] = useState<string | null>(null);
+
+  const builderElements = filterBuilderVisibleElements(elements);
 
   async function handleAddElement() {
     setSectionError(null);
@@ -53,15 +57,22 @@ export function StageElementsSection({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Stage Elements</h2>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Stage Elements</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Track Feed is included automatically on every stage.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
           <select
             value={elementType}
-            onChange={(e) => setElementType(e.target.value as StageElementType)}
+            onChange={(e) =>
+              setElementType(e.target.value as AddableStageElementType)
+            }
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white"
           >
-            {STAGE_ELEMENT_TYPES.map((type) => (
+            {ADDABLE_STAGE_ELEMENT_TYPES.map((type) => (
               <option key={type} value={type}>
                 {ELEMENT_TYPE_LABELS[type]}
               </option>
@@ -83,13 +94,13 @@ export function StageElementsSection({
         <p className="mb-3 text-sm text-red-600">{sectionError}</p>
       )}
 
-      {elements.length === 0 ? (
+      {builderElements.length === 0 ? (
         <Card className="text-sm text-gray-500">
           No elements yet. Choose a type and click Add Element.
         </Card>
       ) : (
         <div className="space-y-3">
-          {elements.map((element, index) => (
+          {builderElements.map((element, index) => (
             <StageElementEditorCard
               key={element.id}
               element={element}
@@ -97,7 +108,7 @@ export function StageElementsSection({
               stageId={stageId}
               isPending={isPending}
               isFirst={index === 0}
-              isLast={index === elements.length - 1}
+              isLast={index === builderElements.length - 1}
               isOpen={openElementId === element.id}
               onToggle={() =>
                 setOpenElementId((current) =>

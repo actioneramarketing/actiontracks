@@ -2,10 +2,13 @@ import { PageContainer } from "@/components/layout/Nav";
 import { AddStageForm } from "@/components/tracks/AddStageForm";
 import { StageCard } from "@/components/tracks/StageCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import {
+  ELEMENT_TYPE_LABELS,
+  filterBuilderVisibleElements,
+} from "@/lib/constants/element-types";
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackById } from "@/lib/actions/tracks";
-import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 import Link from "next/link";
 
 interface PageProps {
@@ -40,7 +43,7 @@ export default async function StagesListPage({ params }: PageProps) {
   const stagesWithElements = await Promise.all(
     stages.map(async (stage) => {
       const { elements } = await getElementsForStage(stage.id);
-      const elementLabels = elements
+      const elementLabels = filterBuilderVisibleElements(elements)
         .filter((el) => el.is_enabled)
         .map((el) => el.title ?? ELEMENT_TYPE_LABELS[el.element_type]);
 
