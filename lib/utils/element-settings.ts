@@ -48,12 +48,27 @@ export function parseElementSettingsFromForm(
         mentor_purpose: str(formData, "mentor_purpose"),
         embed_code: str(formData, "embed_code"),
       };
-    case "reflection_journal":
+    case "reflection_journal": {
+      const DEFAULT_REFLECTION_PROMPT =
+        "What did you learn or notice during this stage?";
+      const countRaw = Number(formData.get("prompt_count") ?? 0);
+      const promptCount = Number.isFinite(countRaw) ? countRaw : 0;
+      const prompts: string[] = [];
+
+      for (let i = 0; i < promptCount; i++) {
+        const prompt = str(formData, `journal_prompt_${i}`);
+        if (prompt) {
+          prompts.push(prompt);
+        }
+      }
+
       return {
-        prompt: str(formData, "prompt"),
+        prompts:
+          prompts.length > 0 ? prompts : [DEFAULT_REFLECTION_PROMPT],
         supporting_guidance: str(formData, "supporting_guidance"),
         estimated_time: str(formData, "estimated_time"),
       };
+    }
     case "resources": {
       const resources = [];
       for (let i = 0; i < 5; i++) {
@@ -153,4 +168,29 @@ export function asResourceArray(value: unknown, length: number) {
     }
     return { title: "", type: "link", url: "", description: "" };
   });
+}
+
+const DEFAULT_REFLECTION_PROMPT =
+  "What did you learn or notice during this stage?";
+
+export function getReflectionJournalPrompts(
+  settings: Record<string, unknown> | null | undefined
+): string[] {
+  const data = settings ?? {};
+
+  if (Array.isArray(data.prompts)) {
+    const prompts = data.prompts
+      .map((item) => (typeof item === "string" ? item.trim() : ""))
+      .filter(Boolean);
+    if (prompts.length > 0) {
+      return prompts;
+    }
+  }
+
+  const legacyPrompt = asString(data.prompt).trim();
+  if (legacyPrompt) {
+    return [legacyPrompt];
+  }
+
+  return [DEFAULT_REFLECTION_PROMPT];
 }

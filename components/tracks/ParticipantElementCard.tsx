@@ -10,6 +10,7 @@ import {
   asString,
   asStringArray,
   asTaskArray,
+  getReflectionJournalPrompts,
 } from "@/lib/utils/element-settings";
 
 interface ParticipantElementCardProps {
@@ -169,21 +170,25 @@ function AiMentorPreview({ settings }: { settings: Record<string, unknown> }) {
 }
 
 function ReflectionJournalPreview({ settings }: { settings: Record<string, unknown> }) {
-  const prompt = asString(settings.prompt);
+  const prompts = getReflectionJournalPrompts(settings);
   const guidance = asString(settings.supporting_guidance);
   const time = asString(settings.estimated_time);
 
   return (
-    <div className="space-y-2 text-sm">
-      {prompt && <p className="font-medium text-gray-700">{prompt}</p>}
+    <div className="space-y-4 text-sm">
       {guidance && <p className="text-gray-500">{guidance}</p>}
       {time && <p className="text-xs text-gray-400">Estimated time: {time}</p>}
-      <textarea
-        disabled
-        rows={3}
-        placeholder="Write your reflection..."
-        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50"
-      />
+      {prompts.map((prompt, index) => (
+        <div key={index}>
+          <p className="font-medium text-gray-700">{prompt}</p>
+          <textarea
+            disabled
+            rows={3}
+            placeholder="Write your reflection..."
+            className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50"
+          />
+        </div>
+      ))}
     </div>
   );
 }

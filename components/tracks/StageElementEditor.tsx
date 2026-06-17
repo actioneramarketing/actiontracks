@@ -14,7 +14,7 @@ import {
   type AddableStageElementType,
 } from "@/lib/constants/element-types";
 import { StageElement } from "@/lib/types/database";
-import { asRecord } from "@/lib/utils/element-settings";
+import { asRecord, getReflectionJournalPrompts } from "@/lib/utils/element-settings";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useRouter } from "next/navigation";
@@ -153,6 +153,14 @@ function StageElementEditorCard({
   const icon = ELEMENT_TYPE_ICONS[element.element_type];
   const pending = isPending || localPending;
   const orderNumber = element.sort_order ?? 0;
+  const journalPromptCount =
+    element.element_type === "reflection_journal"
+      ? getReflectionJournalPrompts(asRecord(element.settings_json)).length
+      : 0;
+  const collapsedSummary =
+    element.element_type === "reflection_journal"
+      ? `${journalPromptCount} journal prompt${journalPromptCount === 1 ? "" : "s"}`
+      : null;
 
   async function handleSave(formData: FormData) {
     setMessage(null);
@@ -234,7 +242,10 @@ function StageElementEditorCard({
                 </span>
               )}
             </div>
-            {!isOpen && element.description && (
+            {!isOpen && collapsedSummary && (
+              <p className="text-sm text-teal-700 mt-0.5">{collapsedSummary}</p>
+            )}
+            {!isOpen && !collapsedSummary && element.description && (
               <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">
                 {element.description}
               </p>

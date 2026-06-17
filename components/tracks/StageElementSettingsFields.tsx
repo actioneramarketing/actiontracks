@@ -1,5 +1,6 @@
 import { StageElementType } from "@/lib/types/database";
 import { AiMentorSettingsFields } from "@/components/tracks/AiMentorSettingsFields";
+import { ReflectionJournalSettingsFields } from "@/components/tracks/ReflectionJournalSettingsFields";
 import {
   asResourceArray,
   asString,
@@ -26,7 +27,7 @@ export function StageElementSettingsFields({
     case "ai_mentor":
       return <AiMentorSettingsFields settings={settings} />;
     case "reflection_journal":
-      return <ReflectionJournalFields settings={settings} />;
+      return <ReflectionJournalSettingsFields settings={settings} />;
     case "resources":
       return <ResourcesFields settings={settings} />;
     case "track_feed":
@@ -158,16 +159,6 @@ function TaskListFields({ settings }: { settings: Record<string, unknown> }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function ReflectionJournalFields({ settings }: { settings: Record<string, unknown> }) {
-  return (
-    <div className="space-y-3">
-      <Field label="Prompt" name="prompt" defaultValue={asString(settings.prompt)} textarea />
-      <Field label="Supporting Guidance" name="supporting_guidance" defaultValue={asString(settings.supporting_guidance)} textarea />
-      <Field label="Estimated Time" name="estimated_time" defaultValue={asString(settings.estimated_time, "5-10 minutes")} />
     </div>
   );
 }

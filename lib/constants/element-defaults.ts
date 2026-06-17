@@ -65,7 +65,7 @@ export const ELEMENT_DEFAULTS: Record<StageElementType, ElementDefaults> = {
     description:
       "Give participants a private place to capture insights, progress, and reflections.",
     settings_json: {
-      prompt: "What did you learn or notice during this stage?",
+      prompts: ["What did you learn or notice during this stage?"],
       supporting_guidance: "",
       estimated_time: "5-10 minutes",
     },
