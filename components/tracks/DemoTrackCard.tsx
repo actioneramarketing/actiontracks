@@ -1,18 +1,16 @@
 import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { LibraryTrack } from "@/lib/demo-data";
+import { ActionTrackListItem } from "@/lib/types/database";
 
 interface DemoTrackCardProps {
-  track: LibraryTrack;
+  track: ActionTrackListItem;
   variant?: "library" | "guide";
-  trackId?: string;
 }
 
 export function DemoTrackCard({
   track,
   variant = "library",
-  trackId = "demo-track",
 }: DemoTrackCardProps) {
   return (
     <Card className="flex flex-col h-full hover:shadow-md transition-shadow">
@@ -45,13 +43,13 @@ export function DemoTrackCard({
         </Button>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button href={`/guide/tracks/${trackId}/edit`} variant="secondary" size="sm">
+          <Button href={`/guide/tracks/${track.id}/edit`} variant="secondary" size="sm">
             Edit
           </Button>
-          <Button href={`/guide/tracks/${trackId}/stages`} variant="secondary" size="sm">
+          <Button href={`/guide/tracks/${track.id}/stages`} variant="secondary" size="sm">
             Stages
           </Button>
-          <Button href={`/guide/tracks/${trackId}/preview`} variant="accent" size="sm">
+          <Button href={`/guide/tracks/${track.id}/preview`} variant="accent" size="sm">
             Preview
           </Button>
         </div>

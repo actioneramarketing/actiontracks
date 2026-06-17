@@ -20,7 +20,19 @@ export default function LibraryPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {libraryTracks.map((track) => (
-          <DemoTrackCard key={track.slug} track={track} variant="library" />
+          <DemoTrackCard
+            key={track.slug}
+            track={{
+              id: track.slug,
+              slug: track.slug,
+              title: track.title,
+              shortDescription: track.shortDescription,
+              guideName: track.guideName,
+              durationWeeks: track.durationWeeks,
+              status: track.status,
+            }}
+            variant="library"
+          />
         ))}
       </div>
     </PageContainer>

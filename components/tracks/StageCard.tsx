@@ -1,13 +1,23 @@
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { DemoStage } from "@/lib/demo-data";
+
+export interface StageCardData {
+  id: string;
+  number: number;
+  title: string;
+  subtitle?: string | null;
+  stageGoal?: string | null;
+  elements: string[];
+}
 
 interface StageCardProps {
-  stage: DemoStage;
+  stage: StageCardData;
   trackId: string;
 }
 
 export function StageCard({ stage, trackId }: StageCardProps) {
+  const summary = stage.subtitle ?? stage.stageGoal ?? "";
+
   return (
     <Card>
       <div className="flex items-start gap-4">
@@ -16,18 +26,22 @@ export function StageCard({ stage, trackId }: StageCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-semibold text-gray-900">{stage.title}</h3>
-          <p className="text-sm text-gray-500 mt-0.5">{stage.shortGoal}</p>
+          {summary && (
+            <p className="text-sm text-gray-500 mt-0.5">{summary}</p>
+          )}
 
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {stage.elements.map((el) => (
-              <span
-                key={el}
-                className="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200"
-              >
-                {el}
-              </span>
-            ))}
-          </div>
+          {stage.elements.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {stage.elements.map((el) => (
+                <span
+                  key={el}
+                  className="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200"
+                >
+                  {el}
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="mt-4">
             <Button
