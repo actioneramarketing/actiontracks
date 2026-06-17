@@ -16,6 +16,23 @@ function revalidateStageElementPaths(trackId: string, stageId: string) {
   revalidatePath(`/guide/tracks/${trackId}/stages`);
 }
 
+async function loadOrderedElementsForStage(stageId: string) {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("stage_elements")
+    .select("*")
+    .eq("stage_id", stageId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as StageElement[];
+}
+
 export async function getElementsForStage(stageId: string): Promise<{
   elements: StageElement[];
   error?: string;
@@ -34,7 +51,8 @@ export async function getElementsForStage(stageId: string): Promise<{
       .from("stage_elements")
       .select("*")
       .eq("stage_id", stageId)
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
 
     if (error) {
       return { elements: [], error: error.message };
@@ -54,7 +72,7 @@ export async function createStageElement(
   stageId: string,
   trackId: string,
   elementType: string
-) {
+): Promise<string> {
   if (!isStageElementType(elementType)) {
     throw new Error("Invalid element type.");
   }
@@ -74,7 +92,10 @@ export async function createStageElement(
     throw new Error(existingError.message);
   }
 
-  const nextOrder = (existingElements?.[0]?.sort_order ?? 0) + 1;
+  const nextOrder =
+    existingElements && existingElements.length > 0
+      ? (existingElements[0].sort_order ?? 0) + 1
+      : 1;
 
   const payload = {
     stage_id: stageId,
@@ -88,13 +109,18 @@ export async function createStageElement(
     sort_order: nextOrder,
   };
 
-  const { error } = await supabase.from("stage_elements").insert(payload);
+  const { data, error } = await supabase
+    .from("stage_elements")
+    .insert(payload)
+    .select("id")
+    .single();
 
   if (error) {
     throw new Error(error.message);
   }
 
   revalidateStageElementPaths(trackId, stageId);
+  return data.id;
 }
 
 export async function updateStageElement(elementId: string, formData: FormData) {
@@ -189,4 +215,61 @@ export async function toggleStageElement(elementId: string, isEnabled: boolean) 
   if (element?.track_id && element?.stage_id) {
     revalidateStageElementPaths(element.track_id, element.stage_id);
   }
+}
+
+export async function moveStageElement(
+  elementId: string,
+  direction: "up" | "down"
+) {
+  const supabase = createAdminClient();
+
+  const { data: current, error: currentError } = await supabase
+    .from("stage_elements")
+    .select("id, stage_id, track_id")
+    .eq("id", elementId)
+    .maybeSingle();
+
+  if (currentError) {
+    throw new Error(currentError.message);
+  }
+
+  if (!current) {
+    throw new Error("Element not found.");
+  }
+
+  const elements = await loadOrderedElementsForStage(current.stage_id);
+  const currentIndex = elements.findIndex((element) => element.id === elementId);
+
+  if (currentIndex === -1) {
+    throw new Error("Element not found in stage.");
+  }
+
+  const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+  if (targetIndex < 0 || targetIndex >= elements.length) {
+    throw new Error(`Cannot move element ${direction}.`);
+  }
+
+  const reordered = [...elements];
+  const [moved] = reordered.splice(currentIndex, 1);
+  reordered.splice(targetIndex, 0, moved);
+
+  const updates = reordered.map((element, index) =>
+    supabase
+      .from("stage_elements")
+      .update({
+        sort_order: index + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", element.id)
+  );
+
+  const results = await Promise.all(updates);
+  const failed = results.find((result) => result.error);
+
+  if (failed?.error) {
+    throw new Error(failed.error.message);
+  }
+
+  revalidateStageElementPaths(current.track_id, current.stage_id);
 }

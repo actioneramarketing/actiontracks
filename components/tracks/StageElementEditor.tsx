@@ -3,6 +3,7 @@
 import {
   createStageElement,
   deleteStageElement,
+  moveStageElement,
   updateStageElement,
 } from "@/lib/actions/stage-elements";
 import {
@@ -11,13 +12,7 @@ import {
   STAGE_ELEMENT_TYPES,
 } from "@/lib/constants/element-types";
 import { StageElement, StageElementType } from "@/lib/types/database";
-import {
-  asRecord,
-  asResourceArray,
-  asString,
-  asStringArray,
-  asTaskArray,
-} from "@/lib/utils/element-settings";
+import { asRecord } from "@/lib/utils/element-settings";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useRouter } from "next/navigation";
@@ -39,12 +34,14 @@ export function StageElementsSection({
   const [isPending, startTransition] = useTransition();
   const [elementType, setElementType] = useState<StageElementType>("live_call");
   const [sectionError, setSectionError] = useState<string | null>(null);
+  const [openElementId, setOpenElementId] = useState<string | null>(null);
 
   async function handleAddElement() {
     setSectionError(null);
     startTransition(async () => {
       try {
-        await createStageElement(stageId, trackId, elementType);
+        const newElementId = await createStageElement(stageId, trackId, elementType);
+        setOpenElementId(newElementId);
         router.refresh();
       } catch (error) {
         setSectionError(
@@ -92,13 +89,22 @@ export function StageElementsSection({
         </Card>
       ) : (
         <div className="space-y-3">
-          {elements.map((element) => (
+          {elements.map((element, index) => (
             <StageElementEditorCard
               key={element.id}
               element={element}
               trackId={trackId}
               stageId={stageId}
               isPending={isPending}
+              isFirst={index === 0}
+              isLast={index === elements.length - 1}
+              isOpen={openElementId === element.id}
+              onToggle={() =>
+                setOpenElementId((current) =>
+                  current === element.id ? null : element.id
+                )
+              }
+              onCollapse={() => setOpenElementId(null)}
             />
           ))}
         </div>
@@ -112,20 +118,30 @@ function StageElementEditorCard({
   trackId,
   stageId,
   isPending,
+  isFirst,
+  isLast,
+  isOpen,
+  onToggle,
+  onCollapse,
 }: {
   element: StageElement;
   trackId: string;
   stageId: string;
   isPending: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  onCollapse: () => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [localPending, startTransition] = useTransition();
 
   const label = ELEMENT_TYPE_LABELS[element.element_type];
   const icon = ELEMENT_TYPE_ICONS[element.element_type];
   const pending = isPending || localPending;
+  const orderNumber = element.sort_order ?? 0;
 
   async function handleSave(formData: FormData) {
     setMessage(null);
@@ -133,6 +149,7 @@ function StageElementEditorCard({
       try {
         await updateStageElement(element.id, formData);
         setMessage("Saved.");
+        onCollapse();
         router.refresh();
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Failed to save.");
@@ -147,6 +164,7 @@ function StageElementEditorCard({
     startTransition(async () => {
       try {
         await deleteStageElement(element.id);
+        onCollapse();
         router.refresh();
       } catch (error) {
         setMessage(
@@ -156,45 +174,89 @@ function StageElementEditorCard({
     });
   }
 
+  async function handleMove(direction: "up" | "down") {
+    setMessage(null);
+    startTransition(async () => {
+      try {
+        await moveStageElement(element.id, direction);
+        router.refresh();
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Failed to reorder.");
+      }
+    });
+  }
+
   return (
     <div
       className={`rounded-xl border bg-white ${
-        element.is_enabled ? "border-teal-200 shadow-sm" : "border-gray-200"
-      }`}
+        element.is_enabled ? "border-teal-200" : "border-gray-200"
+      } ${isOpen ? "shadow-sm" : ""}`}
     >
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-3 p-4 text-left"
-      >
-        <span className="text-xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-gray-900">
-              {element.title ?? label}
-            </h4>
-            <span className="text-xs text-gray-400">{label}</span>
-            {element.is_enabled && (
-              <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
-                Enabled
+      <div className="flex items-start gap-2 p-4">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex flex-1 items-start gap-3 text-left min-w-0"
+        >
+          <span className="text-xl shrink-0">{icon}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded bg-gray-100 px-1.5 text-xs font-medium text-gray-600">
+                {orderNumber}
               </span>
-            )}
-            {element.is_required && (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
-                Required
-              </span>
+              <h4 className="font-medium text-gray-900">
+                {element.title ?? label}
+              </h4>
+              <span className="text-xs text-gray-400">{label}</span>
+              {element.is_enabled ? (
+                <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
+                  Enabled
+                </span>
+              ) : (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                  Disabled
+                </span>
+              )}
+              {element.is_required && (
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                  Required
+                </span>
+              )}
+            </div>
+            {!isOpen && element.description && (
+              <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">
+                {element.description}
+              </p>
             )}
           </div>
-          {element.description && (
-            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
-              {element.description}
-            </p>
-          )}
-        </div>
-        <span className="text-gray-400 text-lg">{open ? "−" : "+"}</span>
-      </button>
+          <span className="text-gray-400 text-lg shrink-0">{isOpen ? "−" : "+"}</span>
+        </button>
 
-      {open && (
+        <div className="flex flex-col gap-1 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pending || isFirst}
+            onClick={() => handleMove("up")}
+            className="px-2 py-1 text-xs"
+          >
+            ↑
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pending || isLast}
+            onClick={() => handleMove("down")}
+            className="px-2 py-1 text-xs"
+          >
+            ↓
+          </Button>
+        </div>
+      </div>
+
+      {isOpen && (
         <form
           action={handleSave}
           className="border-t border-gray-100 px-4 pb-4 pt-3 space-y-4"
