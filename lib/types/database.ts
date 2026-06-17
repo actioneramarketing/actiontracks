@@ -40,17 +40,21 @@ export interface ActionTrack {
 
 export interface ActionTrackStage {
   id: string;
-  action_track_id: string;
+  track_id: string;
   stage_number: number;
   slug: string;
   title: string;
   subtitle: string | null;
   stage_goal: string | null;
+  stage_summary: string | null;
   what_youll_accomplish: string | null;
   next_action_title: string | null;
   next_action_description: string | null;
+  unlock_type: string | null;
   is_final_stage: boolean;
+  settings_json: Record<string, unknown> | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface StageElement {

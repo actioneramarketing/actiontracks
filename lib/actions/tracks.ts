@@ -128,6 +128,8 @@ export async function getActionTrackById(
   }
 }
 
+export const getTrackById = getActionTrackById;
+
 export async function getActionTrackBySlug(
   slug: string
 ): Promise<{ track: ActionTrack | null; error?: string }> {

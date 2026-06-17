@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 export interface StageCardData {
   id: string;
@@ -7,6 +8,9 @@ export interface StageCardData {
   title: string;
   subtitle?: string | null;
   stageGoal?: string | null;
+  whatYoullAccomplish?: string | null;
+  nextActionTitle?: string | null;
+  isFinalStage?: boolean;
   elements: string[];
 }
 
@@ -25,9 +29,26 @@ export function StageCard({ stage, trackId }: StageCardProps) {
           {stage.number}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900">{stage.title}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-900">{stage.title}</h3>
+            {stage.isFinalStage && (
+              <Badge variant="purple">Final Stage</Badge>
+            )}
+          </div>
           {summary && (
             <p className="text-sm text-gray-500 mt-0.5">{summary}</p>
+          )}
+          {stage.whatYoullAccomplish && (
+            <p className="text-sm text-gray-600 mt-2">
+              <span className="font-medium text-gray-700">Accomplish: </span>
+              {stage.whatYoullAccomplish}
+            </p>
+          )}
+          {stage.nextActionTitle && (
+            <p className="text-sm text-gray-600 mt-1">
+              <span className="font-medium text-gray-700">Next action: </span>
+              {stage.nextActionTitle}
+            </p>
           )}
 
           {stage.elements.length > 0 && (

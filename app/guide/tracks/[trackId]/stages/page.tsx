@@ -7,7 +7,6 @@ import { getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackById } from "@/lib/actions/tracks";
 import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ trackId: string }>;
@@ -18,14 +17,22 @@ export default async function StagesListPage({ params }: PageProps) {
   const { track, error: trackError } = await getActionTrackById(trackId);
 
   if (!track) {
-    if (trackError) {
-      return (
-        <PageContainer>
-          <p className="text-sm text-gray-600">{trackError}</p>
-        </PageContainer>
-      );
-    }
-    notFound();
+    return (
+      <PageContainer>
+        <div className="py-16 text-center">
+          <h1 className="text-xl font-semibold text-gray-900">Track not found</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            {trackError ?? "We could not find this Action Track."}
+          </p>
+          <Link
+            href="/guide/tracks"
+            className="mt-4 inline-block text-sm text-teal-700 hover:underline"
+          >
+            Back to Manage Action Tracks
+          </Link>
+        </div>
+      </PageContainer>
+    );
   }
 
   const { stages, error: stagesError } = await getStagesForTrack(trackId);
@@ -43,6 +50,9 @@ export default async function StagesListPage({ params }: PageProps) {
         title: stage.title,
         subtitle: stage.subtitle,
         stageGoal: stage.stage_goal,
+        whatYoullAccomplish: stage.what_youll_accomplish,
+        nextActionTitle: stage.next_action_title,
+        isFinalStage: stage.is_final_stage,
         elements: elementLabels,
       };
     })
@@ -61,18 +71,24 @@ export default async function StagesListPage({ params }: PageProps) {
 
       <SectionHeader
         title="Manage Stages"
-        description={`${track.title} — ${stages.length} stages`}
-        action={<AddStageForm trackId={trackId} />}
-        className="mb-8"
+        description={`${track.title} — ${stages.length} stage${stages.length === 1 ? "" : "s"}`}
+        className="mb-6"
       />
 
       {stagesError && (
-        <p className="mb-4 text-sm text-amber-700">{stagesError}</p>
+        <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+          {stagesError}
+        </p>
       )}
 
+      <AddStageForm trackId={trackId} />
+
       {stagesWithElements.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm text-gray-600">
-          No stages yet. Click Add Stage to create the first one.
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+          <h2 className="text-lg font-semibold text-gray-900">No stages yet</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Use the form above to add your first stage. It will become Stage 1.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">

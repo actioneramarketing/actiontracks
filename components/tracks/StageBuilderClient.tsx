@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  createStageElement,
-  deleteStageElement,
-  updateStageElement,
-} from "@/lib/actions/stage-elements";
 import { updateStage } from "@/lib/actions/stages";
-import {
-  ELEMENT_TYPE_ICONS,
-  ELEMENT_TYPE_LABELS,
-  STAGE_ELEMENT_TYPES,
-} from "@/lib/constants/element-types";
+import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 import { ActionTrack, ActionTrackStage, StageElement } from "@/lib/types/database";
 import { PageContainer } from "@/components/layout/Nav";
 import { Button } from "@/components/ui/Button";
@@ -37,8 +28,6 @@ export function StageBuilderClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [stageMessage, setStageMessage] = useState<string | null>(null);
-  const [elementType, setElementType] = useState(STAGE_ELEMENT_TYPES[0]);
-  const [elementMessages, setElementMessages] = useState<Record<string, string>>({});
 
   async function handleStageSave(formData: FormData) {
     setStageMessage(null);
@@ -50,49 +39,6 @@ export function StageBuilderClient({
       } catch (error) {
         setStageMessage(
           error instanceof Error ? error.message : "Failed to save stage."
-        );
-      }
-    });
-  }
-
-  async function handleAddElement() {
-    startTransition(async () => {
-      try {
-        await createStageElement(stageId, trackId, elementType);
-        router.refresh();
-      } catch (error) {
-        setStageMessage(
-          error instanceof Error ? error.message : "Failed to add element."
-        );
-      }
-    });
-  }
-
-  async function handleElementSave(elementId: string, formData: FormData) {
-    setElementMessages((prev) => ({ ...prev, [elementId]: "" }));
-    startTransition(async () => {
-      try {
-        await updateStageElement(elementId, formData);
-        setElementMessages((prev) => ({ ...prev, [elementId]: "Saved." }));
-        router.refresh();
-      } catch (error) {
-        setElementMessages((prev) => ({
-          ...prev,
-          [elementId]:
-            error instanceof Error ? error.message : "Failed to save element.",
-        }));
-      }
-    });
-  }
-
-  async function handleDeleteElement(elementId: string) {
-    startTransition(async () => {
-      try {
-        await deleteStageElement(elementId, trackId, stageId);
-        router.refresh();
-      } catch (error) {
-        setStageMessage(
-          error instanceof Error ? error.message : "Failed to delete element."
         );
       }
     });
@@ -123,7 +69,7 @@ export function StageBuilderClient({
             </h2>
             <form action={handleStageSave} className="space-y-4">
               <input type="hidden" name="track_id" value={trackId} />
-              <FormField label="Stage Title" name="title" defaultValue={stage.title} />
+              <FormField label="Stage Title" name="title" defaultValue={stage.title} required />
               <FormField
                 label="Stage Subtitle"
                 name="subtitle"
@@ -133,6 +79,12 @@ export function StageBuilderClient({
                 label="Stage Goal"
                 name="stage_goal"
                 defaultValue={stage.stage_goal ?? ""}
+                textarea
+              />
+              <FormField
+                label="Stage Summary"
+                name="stage_summary"
+                defaultValue={stage.stage_summary ?? ""}
                 textarea
               />
               <FormField
@@ -151,6 +103,12 @@ export function StageBuilderClient({
                 name="next_action_description"
                 defaultValue={stage.next_action_description ?? ""}
                 textarea
+              />
+              <FormField
+                label="Unlock Type"
+                name="unlock_type"
+                defaultValue={stage.unlock_type ?? ""}
+                placeholder="e.g. sequential, immediate"
               />
               <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
@@ -172,56 +130,35 @@ export function StageBuilderClient({
             </form>
           </Card>
 
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Stage Elements
-              </h2>
-              <div className="flex items-center gap-2">
-                <select
-                  value={elementType}
-                  onChange={(e) => setElementType(e.target.value as typeof elementType)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white"
-                >
-                  {STAGE_ELEMENT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {ELEMENT_TYPE_LABELS[type]}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  type="button"
-                  variant="accent"
-                  size="sm"
-                  disabled={isPending}
-                  onClick={handleAddElement}
-                >
-                  Add Element
-                </Button>
-              </div>
-            </div>
-
+          <Card>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Stage Elements
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Element configuration is coming soon. Existing elements are shown
+              below as placeholders.
+            </p>
             {elements.length === 0 ? (
-              <Card className="text-sm text-gray-500">
-                No elements yet. Add one using the dropdown above.
-              </Card>
+              <p className="text-sm text-gray-400 italic">
+                No elements configured for this stage yet.
+              </p>
             ) : (
-              <div className="space-y-3">
-                {elements.map((element) => (
-                  <ElementEditorCard
-                    key={element.id}
-                    element={element}
-                    trackId={trackId}
-                    stageId={stageId}
-                    isPending={isPending}
-                    message={elementMessages[element.id]}
-                    onSave={handleElementSave}
-                    onDelete={handleDeleteElement}
-                  />
+              <div className="flex flex-wrap gap-2">
+                {elements.map((el) => (
+                  <span
+                    key={el.id}
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs ring-1 ${
+                      el.is_enabled
+                        ? "bg-teal-50 text-teal-700 ring-teal-200"
+                        : "bg-gray-50 text-gray-500 ring-gray-200"
+                    }`}
+                  >
+                    {el.title ?? ELEMENT_TYPE_LABELS[el.element_type]}
+                  </span>
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -237,16 +174,33 @@ export function StageBuilderClient({
               <p className="text-sm text-gray-500 mt-1">
                 {stage.subtitle ?? stage.stage_goal}
               </p>
-              <div className="mt-3 flex flex-wrap gap-1">
-                {enabledElements.map((el) => (
-                  <span
-                    key={el.id}
-                    className="text-xs bg-gray-50 px-2 py-0.5 rounded ring-1 ring-gray-200"
-                  >
-                    {el.title ?? ELEMENT_TYPE_LABELS[el.element_type]}
-                  </span>
-                ))}
-              </div>
+              {stage.what_youll_accomplish && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {stage.what_youll_accomplish}
+                </p>
+              )}
+              {stage.next_action_title && (
+                <p className="text-sm text-gray-700 mt-2 font-medium">
+                  Next: {stage.next_action_title}
+                </p>
+              )}
+              {stage.is_final_stage && (
+                <p className="text-xs text-violet-700 mt-2 font-medium">
+                  Final Stage
+                </p>
+              )}
+              {enabledElements.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {enabledElements.map((el) => (
+                    <span
+                      key={el.id}
+                      className="text-xs bg-gray-50 px-2 py-0.5 rounded ring-1 ring-gray-200"
+                    >
+                      {el.title ?? ELEMENT_TYPE_LABELS[el.element_type]}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <Button
               href={`/track/${track.slug}/stages/${stage.slug}`}
@@ -269,7 +223,7 @@ export function StageBuilderClient({
               </li>
               <li className="flex gap-2">
                 <span className="text-teal-600">2.</span>
-                Add and configure support elements for this stage.
+                Stage elements will be configurable in a future release.
               </li>
               <li className="flex gap-2">
                 <span className="text-teal-600">3.</span>
@@ -283,134 +237,20 @@ export function StageBuilderClient({
   );
 }
 
-function ElementEditorCard({
-  element,
-  trackId,
-  stageId,
-  isPending,
-  message,
-  onSave,
-  onDelete,
-}: {
-  element: StageElement;
-  trackId: string;
-  stageId: string;
-  isPending: boolean;
-  message?: string;
-  onSave: (elementId: string, formData: FormData) => void;
-  onDelete: (elementId: string) => void;
-}) {
-  const [open, setOpen] = useState(true);
-  const label = ELEMENT_TYPE_LABELS[element.element_type];
-  const icon = ELEMENT_TYPE_ICONS[element.element_type];
-  const settingsValue =
-    element.settings_json && Object.keys(element.settings_json).length > 0
-      ? JSON.stringify(element.settings_json, null, 2)
-      : "";
-
-  return (
-    <div
-      className={`rounded-xl border bg-white ${
-        element.is_enabled ? "border-teal-200 shadow-sm" : "border-gray-200"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-3 p-4 text-left"
-      >
-        <span className="text-xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="font-medium text-gray-900">
-              {element.title ?? label}
-            </h4>
-            {element.is_enabled && (
-              <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
-                Enabled
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-gray-500 mt-0.5">{label}</p>
-        </div>
-        <span className="text-gray-400 text-lg">{open ? "−" : "+"}</span>
-      </button>
-
-      {open && (
-        <form
-          action={(formData) => onSave(element.id, formData)}
-          className="border-t border-gray-100 px-4 pb-4 pt-3 space-y-3"
-        >
-          <input type="hidden" name="track_id" value={trackId} />
-          <input type="hidden" name="stage_id" value={stageId} />
-          <FormField
-            label="Title"
-            name="title"
-            defaultValue={element.title ?? label}
-          />
-          <FormField
-            label="Description"
-            name="description"
-            defaultValue={element.description ?? ""}
-            textarea
-          />
-          <FormField
-            label="Settings JSON"
-            name="settings_json"
-            defaultValue={settingsValue}
-            textarea
-          />
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                name="is_required"
-                defaultChecked={element.is_required}
-                className="rounded border-gray-300"
-              />
-              Required
-            </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                name="is_enabled"
-                defaultChecked={element.is_enabled}
-                className="rounded border-gray-300"
-              />
-              Enabled
-            </label>
-          </div>
-          <div className="flex items-center gap-3 pt-1">
-            <Button type="submit" variant="secondary" size="sm" disabled={isPending}>
-              Save Element
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isPending}
-              onClick={() => onDelete(element.id)}
-            >
-              Delete
-            </Button>
-            {message && <span className="text-xs text-gray-600">{message}</span>}
-          </div>
-        </form>
-      )}
-    </div>
-  );
-}
-
 function FormField({
   label,
   name,
   defaultValue,
+  placeholder,
   textarea = false,
+  required,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
+  placeholder?: string;
   textarea?: boolean;
+  required?: boolean;
 }) {
   return (
     <div>
@@ -421,13 +261,17 @@ function FormField({
         <textarea
           name={name}
           defaultValue={defaultValue}
+          placeholder={placeholder}
           rows={2}
+          required={required}
           className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
         />
       ) : (
         <input
           name={name}
           defaultValue={defaultValue}
+          placeholder={placeholder}
+          required={required}
           className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
         />
       )}
