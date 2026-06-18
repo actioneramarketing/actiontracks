@@ -39,6 +39,105 @@ async function generateUniqueStageSlug(
   return candidate;
 }
 
+const TEMP_STAGE_NUMBER_OFFSET = 1000;
+
+type StageActionLogContext = {
+  action: string;
+  stageId?: string;
+  trackId?: string;
+  direction?: string;
+  phase?: string;
+  stageRowId?: string;
+  stageNumber?: number;
+};
+
+function logStageActionError(
+  context: StageActionLogContext,
+  supabaseError?: {
+    message: string;
+    code?: string | null;
+    details?: string | null;
+    hint?: string | null;
+  }
+) {
+  console.error(`[${context.action}]`, {
+    ...context,
+    ...(supabaseError
+      ? {
+          supabase: {
+            message: supabaseError.message,
+            code: supabaseError.code ?? undefined,
+            details: supabaseError.details ?? undefined,
+            hint: supabaseError.hint ?? undefined,
+          },
+        }
+      : {}),
+  });
+}
+
+/**
+ * Persists stage order without violating unique (track_id, stage_number).
+ * Phase 1: assign temporary numbers. Phase 2: assign final sequential numbers.
+ */
+async function persistStageNumbersSafely(
+  trackId: string,
+  orderedStages: ActionTrackStage[],
+  logContext: StageActionLogContext
+): Promise<void> {
+  if (orderedStages.length === 0) {
+    return;
+  }
+
+  const supabase = createAdminClient();
+  const updatedAt = new Date().toISOString();
+
+  for (let index = 0; index < orderedStages.length; index++) {
+    const tempNumber = TEMP_STAGE_NUMBER_OFFSET + index;
+    const { error } = await supabase
+      .from("action_track_stages")
+      .update({ stage_number: tempNumber, updated_at: updatedAt })
+      .eq("id", orderedStages[index].id)
+      .eq("track_id", trackId);
+
+    if (error) {
+      logStageActionError(
+        {
+          ...logContext,
+          trackId,
+          phase: "temp numbering",
+          stageRowId: orderedStages[index].id,
+          stageNumber: tempNumber,
+        },
+        error
+      );
+      throw new Error(error.message);
+    }
+  }
+
+  for (let index = 0; index < orderedStages.length; index++) {
+    const finalNumber = index + 1;
+    const { error } = await supabase
+      .from("action_track_stages")
+      .update({ stage_number: finalNumber, updated_at: updatedAt })
+      .eq("id", orderedStages[index].id)
+      .eq("track_id", trackId);
+
+    if (error) {
+      logStageActionError(
+        {
+          ...logContext,
+          trackId,
+          phase: "final numbering",
+          stageRowId: orderedStages[index].id,
+          stageNumber: finalNumber,
+        },
+        error
+      );
+      throw new Error(error.message);
+    }
+  }
+}
+
 function revalidateTrackStagePaths(trackId: string, stageId?: string) {
   revalidatePath(`/guide/tracks/${trackId}/stages`);
   revalidatePath(`/guide/tracks/${trackId}/preview`);
@@ -70,24 +169,17 @@ export async function renumberStages(trackId: string): Promise<void> {
   const supabase = createAdminClient();
   const stages = await loadOrderedStagesForTrack(trackId, supabase);
 
-  for (let index = 0; index < stages.length; index++) {
-    const expectedNumber = index + 1;
-    if (stages[index].stage_number === expectedNumber) {
-      continue;
-    }
-
-    const { error } = await supabase
-      .from("action_track_stages")
-      .update({
-        stage_number: expectedNumber,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", stages[index].id);
-
-    if (error) {
-      throw new Error(error.message);
-    }
+  const alreadySequential = stages.every(
+    (stage, index) => stage.stage_number === index + 1
+  );
+  if (alreadySequential) {
+    return;
   }
+
+  await persistStageNumbersSafely(trackId, stages, {
+    action: "renumberStages",
+    trackId,
+  });
 }
 
 export async function moveStage(
@@ -104,12 +196,15 @@ export async function moveStage(
       .maybeSingle();
 
     if (loadError) {
-      console.error("[moveStage] Failed to load stage", {
-        stageId,
-        direction,
-        message: loadError.message,
-        code: loadError.code,
-      });
+      logStageActionError(
+        {
+          action: "moveStage",
+          stageId,
+          direction,
+          phase: "loading current stage",
+        },
+        loadError
+      );
       return { error: "Failed to move stage. Please try again." };
     }
 
@@ -118,7 +213,27 @@ export async function moveStage(
     }
 
     const trackId = currentStage.track_id as string;
-    const stages = await loadOrderedStagesForTrack(trackId, supabase);
+    let stages: ActionTrackStage[];
+
+    try {
+      stages = await loadOrderedStagesForTrack(trackId, supabase);
+    } catch (error) {
+      logStageActionError({
+        action: "moveStage",
+        stageId,
+        trackId,
+        direction,
+        phase: "loading all stages",
+      });
+      console.error("[moveStage] Unexpected error loading stages", {
+        stageId,
+        trackId,
+        direction,
+        error,
+      });
+      return { error: "Failed to move stage. Please try again." };
+    }
+
     const index = stages.findIndex((stage) => stage.id === stageId);
 
     if (index === -1) {
@@ -126,53 +241,26 @@ export async function moveStage(
     }
 
     if (direction === "up" && index === 0) {
-      return { error: "This stage is already first." };
+      return {};
     }
 
     if (direction === "down" && index === stages.length - 1) {
-      return { error: "This stage is already last." };
+      return {};
     }
 
     const swapIndex = direction === "up" ? index - 1 : index + 1;
-    const movingStage = stages[index];
-    const adjacentStage = stages[swapIndex];
-    const movingNumber = movingStage.stage_number;
-    const adjacentNumber = adjacentStage.stage_number;
-    const updatedAt = new Date().toISOString();
+    const reordered = [...stages];
+    [reordered[index], reordered[swapIndex]] = [
+      reordered[swapIndex],
+      reordered[index],
+    ];
 
-    const { error: firstUpdateError } = await supabase
-      .from("action_track_stages")
-      .update({ stage_number: adjacentNumber, updated_at: updatedAt })
-      .eq("id", movingStage.id);
-
-    if (firstUpdateError) {
-      console.error("[moveStage] Supabase update failed", {
-        stageId,
-        direction,
-        message: firstUpdateError.message,
-        code: firstUpdateError.code,
-      });
-      return { error: "Failed to move stage. Please try again." };
-    }
-
-    const { error: secondUpdateError } = await supabase
-      .from("action_track_stages")
-      .update({ stage_number: movingNumber, updated_at: updatedAt })
-      .eq("id", adjacentStage.id);
-
-    if (secondUpdateError) {
-      console.error("[moveStage] Supabase swap rollback needed", {
-        stageId,
-        direction,
-        message: secondUpdateError.message,
-        code: secondUpdateError.code,
-      });
-      await supabase
-        .from("action_track_stages")
-        .update({ stage_number: movingNumber, updated_at: updatedAt })
-        .eq("id", movingStage.id);
-      return { error: "Failed to move stage. Please try again." };
-    }
+    await persistStageNumbersSafely(trackId, reordered, {
+      action: "moveStage",
+      stageId,
+      trackId,
+      direction,
+    });
 
     revalidateTrackStagePaths(trackId, stageId);
     return {};
