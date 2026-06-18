@@ -11,7 +11,10 @@ import {
   TrackStatus,
 } from "@/lib/types/database";
 import { uniqueSlug } from "@/lib/utils/slug";
-import { normalizeActionTrack } from "@/lib/utils/normalize-action-track";
+import {
+  normalizeActionTrack,
+  NormalizedActionTrack,
+} from "@/lib/utils/normalize-action-track";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -30,9 +33,9 @@ function mapTrackToListItem(
     id: track.id,
     slug: track.slug,
     title: track.title,
-    shortDescription: track.short_description ?? "",
+    shortDescription: track.short_description,
     guideName,
-    durationWeeks: track.duration_weeks ?? 0,
+    durationWeeks: track.duration_weeks,
     status: track.status,
   };
 }
@@ -79,14 +82,24 @@ export async function getActionTracks(): Promise<{
       return { tracks: [], error: error.message };
     }
 
-    const tracks = (data ?? []) as ActionTrack[];
     const listItems = await Promise.all(
-      tracks.map(async (track) =>
-        mapTrackToListItem(track, await resolveGuideName(track.guide_id))
-      )
+      (data ?? []).map(async (raw) => {
+        const track = normalizeActionTrack(raw);
+        if (!track) {
+          return null;
+        }
+        return mapTrackToListItem(
+          track,
+          await resolveGuideName(track.guide_id || null)
+        );
+      })
     );
 
-    return { tracks: listItems };
+    return {
+      tracks: listItems.filter(
+        (item): item is ActionTrackListItem => item != null
+      ),
+    };
   } catch (error) {
     const message =
       error instanceof SupabaseConfigError
@@ -98,7 +111,7 @@ export async function getActionTracks(): Promise<{
 
 export async function getActionTrackById(
   trackId: string
-): Promise<{ track: ActionTrack | null; error?: string }> {
+): Promise<{ track: NormalizedActionTrack | null; error?: string }> {
   try {
     const supabase = tryCreateAdminClient();
     if (!supabase) {
@@ -162,7 +175,7 @@ export const getTrackById = getActionTrackById;
 
 export async function getActionTrackBySlug(
   slug: string
-): Promise<{ track: ActionTrack | null; error?: string }> {
+): Promise<{ track: NormalizedActionTrack | null; error?: string }> {
   try {
     const supabase = tryCreateAdminClient();
     if (!supabase) {
@@ -307,5 +320,147 @@ export async function updateActionTrack(trackId: string, formData: FormData) {
 
     console.error("[updateActionTrack] Unexpected error", { trackId, error });
     throw new Error("Failed to save Action Track. Please try again.");
+  }
+}
+
+export interface ActionTrackDebugInfo {
+  trackId: string;
+  found: boolean;
+  supabaseError?: {
+    message: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+  };
+  configError?: string;
+  fields?: {
+    id: string;
+    title: string;
+    slug: string;
+    status: string;
+    track_type: string;
+    duration_weeks: string;
+    start_date: string;
+    end_date: string;
+    visibility: string;
+    created_at: string;
+    updated_at: string;
+  };
+  nullFields?: Record<string, boolean>;
+  settingsJsonIsObject: boolean;
+  settingsJsonType: string;
+}
+
+function safeDisplay(value: unknown): string {
+  if (value == null) {
+    return "(null)";
+  }
+  if (typeof value === "object") {
+    return "(object)";
+  }
+  return String(value);
+}
+
+export async function getActionTrackDebugInfo(
+  trackId: string
+): Promise<ActionTrackDebugInfo> {
+  const base: ActionTrackDebugInfo = {
+    trackId,
+    found: false,
+    settingsJsonIsObject: false,
+    settingsJsonType: "undefined",
+  };
+
+  try {
+    const supabase = tryCreateAdminClient();
+    if (!supabase) {
+      return {
+        ...base,
+        configError:
+          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("action_tracks")
+      .select("*")
+      .eq("id", trackId)
+      .maybeSingle();
+
+    if (error) {
+      return {
+        ...base,
+        supabaseError: {
+          message: error.message,
+          code: error.code ?? undefined,
+          details: error.details ?? undefined,
+          hint: error.hint ?? undefined,
+        },
+      };
+    }
+
+    if (!data) {
+      return base;
+    }
+
+    const row = data as Record<string, unknown>;
+    const settingsJson = row.settings_json;
+
+    return {
+      trackId,
+      found: true,
+      settingsJsonIsObject:
+        settingsJson != null &&
+        typeof settingsJson === "object" &&
+        !Array.isArray(settingsJson),
+      settingsJsonType:
+        settingsJson == null ? "null" : typeof settingsJson,
+      fields: {
+        id: safeDisplay(row.id),
+        title: safeDisplay(row.title),
+        slug: safeDisplay(row.slug),
+        status: safeDisplay(row.status),
+        track_type: safeDisplay(row.track_type),
+        duration_weeks: safeDisplay(row.duration_weeks),
+        start_date: safeDisplay(row.start_date),
+        end_date: safeDisplay(row.end_date),
+        visibility: safeDisplay(row.visibility),
+        created_at: safeDisplay(row.created_at),
+        updated_at: safeDisplay(row.updated_at),
+      },
+      nullFields: {
+        title: row.title == null,
+        slug: row.slug == null,
+        short_description: row.short_description == null,
+        full_description: row.full_description == null,
+        primary_outcome: row.primary_outcome == null,
+        who_this_is_for: row.who_this_is_for == null,
+        current_struggle: row.current_struggle == null,
+        track_type: row.track_type == null,
+        status: row.status == null,
+        duration_weeks: row.duration_weeks == null,
+        start_date: row.start_date == null,
+        end_date: row.end_date == null,
+        visibility: row.visibility == null,
+        hero_image_url: row.hero_image_url == null,
+        reward_title: row.reward_title == null,
+        settings_json: row.settings_json == null,
+        philosophy: row.philosophy == null,
+        guide_id: row.guide_id == null,
+        welcome_headline: row.welcome_headline == null,
+        completion_headline: row.completion_headline == null,
+      },
+    };
+  } catch (error) {
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Failed to load debug info.";
+    return {
+      ...base,
+      configError: message,
+    };
   }
 }

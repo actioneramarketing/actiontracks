@@ -1,5 +1,7 @@
 import { ActionTrack, TrackStatus } from "@/lib/types/database";
 
+export type NormalizedActionTrack = ActionTrack;
+
 function asString(value: unknown, fallback = ""): string {
   if (typeof value === "string") {
     return value;
@@ -10,20 +12,12 @@ function asString(value: unknown, fallback = ""): string {
   return String(value);
 }
 
-function asNullableString(value: unknown): string | null {
-  if (value == null) {
-    return null;
-  }
-  const str = String(value).trim();
-  return str || null;
-}
-
-function asNumberOrNull(value: unknown): number | null {
+function asNumber(value: unknown, fallback = 0): number {
   if (value == null || value === "") {
-    return null;
+    return fallback;
   }
   const num = Number(value);
-  return Number.isFinite(num) ? num : null;
+  return Number.isFinite(num) ? num : fallback;
 }
 
 function parseTrackStatus(value: unknown): TrackStatus {
@@ -34,9 +28,9 @@ function parseTrackStatus(value: unknown): TrackStatus {
 }
 
 /** Normalize Postgres/Supabase date values to YYYY-MM-DD for date inputs. */
-export function normalizeDateForInput(value: unknown): string | null {
+export function normalizeDateForInput(value: unknown): string {
   if (value == null || value === "") {
-    return null;
+    return "";
   }
 
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
@@ -45,22 +39,39 @@ export function normalizeDateForInput(value: unknown): string | null {
 
   const str = String(value).trim();
   const match = str.match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : null;
+  return match ? match[1] : "";
 }
 
 export function normalizeSettingsJson(
   value: unknown
 ): Record<string, unknown> {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return { ...(value as Record<string, unknown>) };
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return {};
+    }
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return JSON.parse(JSON.stringify(parsed)) as Record<string, unknown>;
+      }
+    } catch {
+      return {};
+    }
+    return {};
   }
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+  }
+
   return {};
 }
 
 /**
  * Produces a plain, serializable ActionTrack safe for Client Components and forms.
  */
-export function normalizeActionTrack(raw: unknown): ActionTrack | null {
+export function normalizeActionTrack(raw: unknown): NormalizedActionTrack | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return null;
   }
@@ -75,20 +86,32 @@ export function normalizeActionTrack(raw: unknown): ActionTrack | null {
     id,
     slug: asString(row.slug),
     title: asString(row.title),
-    short_description: asNullableString(row.short_description),
-    primary_outcome: asNullableString(row.primary_outcome),
-    who_this_is_for: asNullableString(row.who_this_is_for),
-    duration_weeks: asNumberOrNull(row.duration_weeks),
-    track_type: asNullableString(row.track_type) ?? "live_guided",
+    short_description: asString(row.short_description),
+    full_description: asString(row.full_description),
+    primary_outcome: asString(row.primary_outcome),
+    who_this_is_for: asString(row.who_this_is_for),
+    current_struggle: asString(row.current_struggle),
+    track_type: asString(row.track_type, "live_guided"),
     status: parseTrackStatus(row.status),
+    duration_weeks: asNumber(row.duration_weeks, 0),
     start_date: normalizeDateForInput(row.start_date),
     end_date: normalizeDateForInput(row.end_date),
-    philosophy: asNullableString(row.philosophy),
-    guide_id: asNullableString(row.guide_id),
-    welcome_headline: asNullableString(row.welcome_headline),
-    completion_headline: asNullableString(row.completion_headline),
+    visibility: asString(row.visibility),
+    hero_image_url: asString(row.hero_image_url),
+    reward_title: asString(row.reward_title),
+    philosophy: asString(row.philosophy),
+    guide_id: asString(row.guide_id),
+    welcome_headline: asString(row.welcome_headline),
+    completion_headline: asString(row.completion_headline),
     settings_json: normalizeSettingsJson(row.settings_json),
     created_at: asString(row.created_at, new Date().toISOString()),
     updated_at: asString(row.updated_at, new Date().toISOString()),
   };
+}
+
+/** Extra safety pass before passing track props to Client Components. */
+export function serializeActionTrackForClient(
+  track: NormalizedActionTrack
+): NormalizedActionTrack {
+  return JSON.parse(JSON.stringify(track)) as NormalizedActionTrack;
 }
