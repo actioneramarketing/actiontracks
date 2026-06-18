@@ -95,8 +95,14 @@ export default async function StagesListPage({ params }: PageProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {stagesWithElements.map((stage) => (
-            <StageCard key={stage.id} stage={stage} trackId={trackId} />
+          {stagesWithElements.map((stage, index) => (
+            <StageCard
+              key={stage.id}
+              stage={stage}
+              trackId={trackId}
+              isFirst={index === 0}
+              isLast={index === stagesWithElements.length - 1}
+            />
           ))}
         </div>
       )}

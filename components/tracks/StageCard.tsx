@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { StageCardControls } from "@/components/tracks/StageCardControls";
 
 export interface StageCardData {
   id: string;
@@ -17,9 +17,11 @@ export interface StageCardData {
 interface StageCardProps {
   stage: StageCardData;
   trackId: string;
+  isFirst: boolean;
+  isLast: boolean;
 }
 
-export function StageCard({ stage, trackId }: StageCardProps) {
+export function StageCard({ stage, trackId, isFirst, isLast }: StageCardProps) {
   const summary = stage.subtitle ?? stage.stageGoal ?? "";
 
   return (
@@ -64,15 +66,12 @@ export function StageCard({ stage, trackId }: StageCardProps) {
             </div>
           )}
 
-          <div className="mt-4">
-            <Button
-              href={`/guide/tracks/${trackId}/stages/${stage.id}`}
-              variant="secondary"
-              size="sm"
-            >
-              Edit Stage
-            </Button>
-          </div>
+          <StageCardControls
+            trackId={trackId}
+            stageId={stage.id}
+            isFirst={isFirst}
+            isLast={isLast}
+          />
         </div>
       </div>
     </Card>
