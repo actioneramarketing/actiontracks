@@ -53,7 +53,7 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
           <h1 className="text-2xl font-bold text-gray-900 mt-2">
             Edit Action Track
           </h1>
-          <p className="text-gray-600">{track.title}</p>
+          <p className="text-gray-600">{track.title || "Untitled Action Track"}</p>
         </div>
         <div className="flex gap-2">
           <Button href={`/guide/tracks/${trackId}/stages`} variant="secondary">
@@ -85,7 +85,7 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
       {activeTab === "Track Details" && (
         <Card padding="lg" className="max-w-2xl">
           <form action={handleSave} className="space-y-5">
-            <FormField label="Track Title" name="title" defaultValue={track.title} />
+            <FormField label="Track Title" name="title" defaultValue={track.title ?? ""} />
             <FormField
               label="Short Description"
               name="short_description"
@@ -147,7 +147,7 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
               </label>
               <select
                 name="status"
-                defaultValue={track.status}
+                defaultValue={track.status ?? "draft"}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm bg-white"
               >
                 <option value="draft">Draft</option>
@@ -180,9 +180,15 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
           <p className="text-gray-600 mb-4">
             Preview how participants will experience this track.
           </p>
-          <Button href={`/track/${track.slug}/welcome`} variant="accent">
-            Open Participant Preview
-          </Button>
+          {track.slug ? (
+            <Button href={`/track/${track.slug}/welcome`} variant="accent">
+              Open Participant Preview
+            </Button>
+          ) : (
+            <p className="text-sm text-gray-500">
+              Preview will be available once this track has a slug.
+            </p>
+          )}
         </Card>
       )}
     </PageContainer>
@@ -210,7 +216,7 @@ function FormField({
       {textarea ? (
         <textarea
           name={name}
-          defaultValue={defaultValue}
+          defaultValue={defaultValue ?? ""}
           rows={3}
           className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
@@ -218,7 +224,7 @@ function FormField({
         <input
           type={type}
           name={name}
-          defaultValue={defaultValue}
+          defaultValue={defaultValue ?? ""}
           className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
       )}

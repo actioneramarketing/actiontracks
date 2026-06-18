@@ -34,6 +34,7 @@ export interface ActionTrack {
   guide_id: string | null;
   welcome_headline: string | null;
   completion_headline: string | null;
+  settings_json: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

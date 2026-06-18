@@ -11,6 +11,7 @@ import {
   TrackStatus,
 } from "@/lib/types/database";
 import { uniqueSlug } from "@/lib/utils/slug";
+import { normalizeActionTrack } from "@/lib/utils/normalize-action-track";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -115,11 +116,40 @@ export async function getActionTrackById(
       .maybeSingle();
 
     if (error) {
+      console.error("[getActionTrackById] Supabase query failed", {
+        route: "/guide/tracks/[trackId]/edit",
+        trackId,
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       return { track: null, error: error.message };
     }
 
-    return { track: (data as ActionTrack | null) ?? null };
+    if (!data) {
+      return { track: null };
+    }
+
+    const track = normalizeActionTrack(data);
+    if (!track) {
+      console.error("[getActionTrackById] Failed to normalize track row", {
+        route: "/guide/tracks/[trackId]/edit",
+        trackId,
+      });
+      return {
+        track: null,
+        error: "The Action Track data could not be read.",
+      };
+    }
+
+    return { track };
   } catch (error) {
+    console.error("[getActionTrackById] Unexpected error", {
+      route: "/guide/tracks/[trackId]/edit",
+      trackId,
+      error,
+    });
     const message =
       error instanceof SupabaseConfigError
         ? error.message
@@ -153,7 +183,11 @@ export async function getActionTrackBySlug(
       return { track: null, error: error.message };
     }
 
-    return { track: (data as ActionTrack | null) ?? null };
+    if (!data) {
+      return { track: null };
+    }
+
+    return { track: normalizeActionTrack(data) };
   } catch (error) {
     const message =
       error instanceof SupabaseConfigError
@@ -209,47 +243,69 @@ export async function createActionTrack(formData: FormData) {
 }
 
 export async function updateActionTrack(trackId: string, formData: FormData) {
-  const supabase = createAdminClient();
+  try {
+    const supabase = createAdminClient();
 
-  const title = String(formData.get("title") ?? "").trim();
-  if (!title) {
-    throw new Error("Track title is required.");
+    const title = String(formData.get("title") ?? "").trim();
+    if (!title) {
+      throw new Error("Track title is required.");
+    }
+
+    const durationWeeksRaw = String(formData.get("duration_weeks") ?? "").trim();
+    const durationWeeks = durationWeeksRaw ? Number(durationWeeksRaw) : null;
+
+    const payload = {
+      title,
+      short_description:
+        String(formData.get("short_description") ?? "").trim() || null,
+      primary_outcome:
+        String(formData.get("primary_outcome") ?? "").trim() || null,
+      who_this_is_for:
+        String(formData.get("who_this_is_for") ?? "").trim() || null,
+      duration_weeks: Number.isFinite(durationWeeks) ? durationWeeks : null,
+      track_type:
+        String(formData.get("track_type") ?? "").trim() || "live_guided",
+      status: parseTrackStatus(String(formData.get("status") ?? "draft")),
+      start_date: String(formData.get("start_date") ?? "").trim() || null,
+      end_date: String(formData.get("end_date") ?? "").trim() || null,
+      philosophy: String(formData.get("philosophy") ?? "").trim() || null,
+      welcome_headline:
+        String(formData.get("welcome_headline") ?? "").trim() || null,
+      completion_headline:
+        String(formData.get("completion_headline") ?? "").trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from("action_tracks")
+      .update(payload)
+      .eq("id", trackId);
+
+    if (error) {
+      console.error("[updateActionTrack] Supabase update failed", {
+        trackId,
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error("Failed to save Action Track. Please try again.");
+    }
+
+    revalidatePath("/guide/tracks");
+    revalidatePath(`/guide/tracks/${trackId}/edit`);
+    revalidatePath(`/guide/tracks/${trackId}/preview`);
+  } catch (error) {
+    if (error instanceof SupabaseConfigError) {
+      console.error("[updateActionTrack] Supabase not configured", { trackId });
+      throw new Error(error.message);
+    }
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    console.error("[updateActionTrack] Unexpected error", { trackId, error });
+    throw new Error("Failed to save Action Track. Please try again.");
   }
-
-  const durationWeeksRaw = String(formData.get("duration_weeks") ?? "").trim();
-  const durationWeeks = durationWeeksRaw ? Number(durationWeeksRaw) : null;
-
-  const payload = {
-    title,
-    short_description:
-      String(formData.get("short_description") ?? "").trim() || null,
-    primary_outcome:
-      String(formData.get("primary_outcome") ?? "").trim() || null,
-    who_this_is_for:
-      String(formData.get("who_this_is_for") ?? "").trim() || null,
-    duration_weeks: Number.isFinite(durationWeeks) ? durationWeeks : null,
-    track_type: String(formData.get("track_type") ?? "").trim() || "live_guided",
-    status: parseTrackStatus(String(formData.get("status") ?? "draft")),
-    start_date: String(formData.get("start_date") ?? "").trim() || null,
-    end_date: String(formData.get("end_date") ?? "").trim() || null,
-    philosophy: String(formData.get("philosophy") ?? "").trim() || null,
-    welcome_headline:
-      String(formData.get("welcome_headline") ?? "").trim() || null,
-    completion_headline:
-      String(formData.get("completion_headline") ?? "").trim() || null,
-    updated_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase
-    .from("action_tracks")
-    .update(payload)
-    .eq("id", trackId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  revalidatePath("/guide/tracks");
-  revalidatePath(`/guide/tracks/${trackId}/edit`);
-  revalidatePath(`/guide/tracks/${trackId}/preview`);
 }

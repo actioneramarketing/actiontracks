@@ -1,6 +1,6 @@
 import { EditTrackPageClient } from "@/components/tracks/EditTrackPageClient";
+import { TrackEditStatusCard } from "@/components/tracks/TrackEditStatusCard";
 import { getActionTrackById } from "@/lib/actions/tracks";
-import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ trackId: string }>;
@@ -10,18 +10,22 @@ export default async function EditTrackPage({ params }: PageProps) {
   const { trackId } = await params;
   const { track, error } = await getActionTrackById(trackId);
 
+  if (error) {
+    return (
+      <TrackEditStatusCard
+        title="Unable to load Action Track"
+        body="There was a problem loading this Action Track. Please go back and try again."
+      />
+    );
+  }
+
   if (!track) {
-    if (error) {
-      return (
-        <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-          <h1 className="text-xl font-semibold text-gray-900">
-            Unable to load track
-          </h1>
-          <p className="mt-2 text-sm text-gray-600">{error}</p>
-        </div>
-      );
-    }
-    notFound();
+    return (
+      <TrackEditStatusCard
+        title="Action Track not found"
+        body="This Action Track could not be found or may have been removed."
+      />
+    );
   }
 
   return <EditTrackPageClient track={track} trackId={trackId} />;
