@@ -45,8 +45,7 @@ interface CompletePageClientProps {
 }
 
 export function CompletePageClient({ track, stageCount }: CompletePageClientProps) {
-  const headline =
-    track.completion_headline ?? "Congratulations — You Did It!";
+  const headline = "Congratulations — You Did It!";
 
   return (
     <>
@@ -59,7 +58,7 @@ export function CompletePageClient({ track, stageCount }: CompletePageClientProp
         </Badge>
         <h1 className="text-3xl sm:text-4xl font-bold">{headline}</h1>
         <p className="mt-3 text-lg text-white/90 max-w-2xl mx-auto">
-          You&apos;ve completed all {track.duration_weeks ?? ""} weeks and every
+          You&apos;ve completed all {track.duration_weeks || ""} weeks and every
           stage of {track.title}.
         </p>
       </Card>
@@ -84,7 +83,7 @@ export function CompletePageClient({ track, stageCount }: CompletePageClientProp
             Review What You&apos;ve Built
           </h2>
           <p className="text-sm text-gray-600">
-            {track.primary_outcome ?? "Your track outcomes will appear here."}
+            {track.primary_outcome || "Your track outcomes will appear here."}
           </p>
         </Card>
 

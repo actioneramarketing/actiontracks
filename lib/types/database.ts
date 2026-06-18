@@ -35,10 +35,7 @@ export interface ActionTrack {
   visibility: string;
   hero_image_url: string;
   reward_title: string;
-  philosophy: string;
   guide_id: string;
-  welcome_headline: string;
-  completion_headline: string;
   settings_json: Record<string, unknown>;
   created_at: string;
   updated_at: string;
