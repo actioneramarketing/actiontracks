@@ -1,6 +1,6 @@
-import { PageContainer } from "@/components/layout/Nav";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
 import { createActionTrack } from "@/lib/actions/tracks";
 import Link from "next/link";
 
@@ -59,7 +59,7 @@ function FormField({
 
 export default function NewTrackPage() {
   return (
-    <PageContainer>
+    <GuideBuilderPageContainer>
       <div className="mb-6">
         <Link
           href="/guide/tracks"
@@ -128,6 +128,6 @@ export default function NewTrackPage() {
           </div>
         </form>
       </Card>
-    </PageContainer>
+    </GuideBuilderPageContainer>
   );
 }

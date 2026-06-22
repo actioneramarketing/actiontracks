@@ -1,6 +1,6 @@
 import { ParticipantElementCard } from "@/components/tracks/ParticipantElementCard";
 import { TrackFeedStageSection } from "@/components/tracks/TrackFeedStageSection";
-import { PageContainer } from "@/components/layout/Nav";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { GuideProfileCard } from "@/components/tracks/GuideProfileCard";
 import { SidebarCard } from "@/components/tracks/SidebarCard";
 import { Badge } from "@/components/ui/Badge";

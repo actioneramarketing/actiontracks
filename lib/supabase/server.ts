@@ -1,9 +1,7 @@
-import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Returns a Supabase server client when env vars are configured.
- * Returns null during build or when credentials are not yet set in Vercel.
- */
 export async function createClient(): Promise<SupabaseClient | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -12,5 +10,22 @@ export async function createClient(): Promise<SupabaseClient | null> {
     return null;
   }
 
-  return createSupabaseClient(url, anonKey);
+  const cookieStore = await cookies();
+
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // setAll can fail in Server Components; middleware keeps sessions fresh.
+        }
+      },
+    },
+  });
 }

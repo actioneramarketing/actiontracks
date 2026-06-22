@@ -15,6 +15,7 @@ import {
   normalizeActionTrack,
   NormalizedActionTrack,
 } from "@/lib/utils/normalize-action-track";
+import { requireGuide } from "@/lib/auth/guide";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -52,11 +53,62 @@ async function resolveGuideName(guideId: string | null): Promise<string> {
 
   const { data } = await supabase
     .from("action_track_guides")
-    .select("name")
+    .select("full_name")
     .eq("id", guideId)
     .maybeSingle();
 
-  return data?.name ?? "Guide";
+  return data?.full_name ?? "Guide";
+}
+
+export async function getActionTracksForGuide(guideId: string): Promise<{
+  tracks: ActionTrackListItem[];
+  error?: string;
+}> {
+  try {
+    const supabase = tryCreateAdminClient();
+    if (!supabase) {
+      return {
+        tracks: [],
+        error:
+          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("action_tracks")
+      .select("*")
+      .eq("guide_id", guideId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return { tracks: [], error: error.message };
+    }
+
+    const listItems = await Promise.all(
+      (data ?? []).map(async (raw) => {
+        const track = normalizeActionTrack(raw);
+        if (!track) {
+          return null;
+        }
+        return mapTrackToListItem(
+          track,
+          await resolveGuideName(track.guide_id || null)
+        );
+      })
+    );
+
+    return {
+      tracks: listItems.filter(
+        (item): item is ActionTrackListItem => item != null
+      ),
+    };
+  } catch (error) {
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : "Failed to load action tracks.";
+    return { tracks: [], error: message };
+  }
 }
 
 export async function getActionTracks(): Promise<{
@@ -211,6 +263,20 @@ export async function getActionTrackBySlug(
 }
 
 export async function createActionTrack(formData: FormData) {
+  const auth = await requireGuide();
+
+  if (auth.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  if (auth.status === "no_profile") {
+    redirect("/guide/profile");
+  }
+
+  if (auth.status === "pending") {
+    throw new Error("Your guide account is not approved yet.");
+  }
+
   const supabase = createAdminClient();
 
   const title = String(formData.get("title") ?? "").trim();
@@ -226,6 +292,7 @@ export async function createActionTrack(formData: FormData) {
   const slug = uniqueSlug(title, Date.now().toString(36).slice(-6));
 
   const payload = {
+    guide_id: auth.guide.id,
     slug,
     title,
     short_description:

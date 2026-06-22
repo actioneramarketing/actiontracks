@@ -6,7 +6,7 @@ import {
   filterBuilderVisibleElements,
 } from "@/lib/constants/element-types";
 import { ActionTrack, ActionTrackStage, StageElement } from "@/lib/types/database";
-import { PageContainer } from "@/components/layout/Nav";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { StageElementsSection } from "@/components/tracks/StageElementEditor";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";

@@ -2,7 +2,7 @@
 
 import { updateActionTrack } from "@/lib/actions/tracks";
 import { NormalizedActionTrack } from "@/lib/utils/normalize-action-track";
-import { PageContainer } from "@/components/layout/Nav";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { BuilderComingSoonCard } from "@/components/tracks/BuilderComingSoonCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";

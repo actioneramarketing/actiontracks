@@ -1,4 +1,4 @@
-import { PageContainer } from "@/components/layout/Nav";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/Button";
 
 export default function HomePage() {

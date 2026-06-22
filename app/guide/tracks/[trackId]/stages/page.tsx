@@ -1,15 +1,18 @@
-import { PageContainer } from "@/components/layout/Nav";
 import { AddStageForm } from "@/components/tracks/AddStageForm";
 import { StageCard } from "@/components/tracks/StageCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { AccessPendingCard } from "@/components/auth/AccessPendingCard";
+import { TrackAccessDeniedCard } from "@/components/auth/TrackAccessDeniedCard";
+import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
 import {
   ELEMENT_TYPE_LABELS,
   filterBuilderVisibleElements,
 } from "@/lib/constants/element-types";
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStagesForTrack } from "@/lib/actions/stages";
-import { getActionTrackById } from "@/lib/actions/tracks";
+import { requireGuideTrackAccess } from "@/lib/auth/guide";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ trackId: string }>;
@@ -17,15 +20,24 @@ interface PageProps {
 
 export default async function StagesListPage({ params }: PageProps) {
   const { trackId } = await params;
-  const { track, error: trackError } = await getActionTrackById(trackId);
+  const access = await requireGuideTrackAccess(trackId);
 
-  if (!track) {
+  if (access.type === "redirect") {
+    redirect(access.to);
+  }
+  if (access.type === "pending") {
+    return <AccessPendingCard />;
+  }
+  if (access.type === "denied") {
+    return <TrackAccessDeniedCard />;
+  }
+  if (access.type === "not_found") {
     return (
-      <PageContainer>
+      <GuideBuilderPageContainer>
         <div className="py-16 text-center">
           <h1 className="text-xl font-semibold text-gray-900">Track not found</h1>
           <p className="mt-2 text-sm text-gray-600">
-            {trackError ?? "We could not find this Action Track."}
+            {access.error ?? "We could not find this Action Track."}
           </p>
           <Link
             href="/guide/tracks"
@@ -34,10 +46,11 @@ export default async function StagesListPage({ params }: PageProps) {
             Back to Manage Action Tracks
           </Link>
         </div>
-      </PageContainer>
+      </GuideBuilderPageContainer>
     );
   }
 
+  const track = access.track;
   const { stages, error: stagesError } = await getStagesForTrack(trackId);
 
   const stagesWithElements = await Promise.all(
@@ -62,7 +75,7 @@ export default async function StagesListPage({ params }: PageProps) {
   );
 
   return (
-    <PageContainer>
+    <GuideBuilderPageContainer>
       <div className="mb-6">
         <Link
           href={`/guide/tracks/${trackId}/edit`}
@@ -106,6 +119,6 @@ export default async function StagesListPage({ params }: PageProps) {
           ))}
         </div>
       )}
-    </PageContainer>
+    </GuideBuilderPageContainer>
   );
 }

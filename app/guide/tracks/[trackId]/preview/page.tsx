@@ -1,10 +1,12 @@
-import { PageContainer } from "@/components/layout/Nav";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { AccessPendingCard } from "@/components/auth/AccessPendingCard";
+import { TrackAccessDeniedCard } from "@/components/auth/TrackAccessDeniedCard";
+import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
 import { getStagesForTrack } from "@/lib/actions/stages";
-import { getActionTrackById } from "@/lib/actions/tracks";
+import { requireGuideTrackAccess } from "@/lib/auth/guide";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ trackId: string }>;
@@ -12,24 +14,33 @@ interface PageProps {
 
 export default async function TrackPreviewPage({ params }: PageProps) {
   const { trackId } = await params;
-  const { track, error } = await getActionTrackById(trackId);
+  const access = await requireGuideTrackAccess(trackId);
 
-  if (!track) {
-    if (error) {
-      return (
-        <PageContainer>
-          <p className="text-sm text-gray-600">{error}</p>
-        </PageContainer>
-      );
-    }
-    notFound();
+  if (access.type === "redirect") {
+    redirect(access.to);
+  }
+  if (access.type === "pending") {
+    return <AccessPendingCard />;
+  }
+  if (access.type === "denied") {
+    return <TrackAccessDeniedCard />;
+  }
+  if (access.type === "not_found") {
+    return (
+      <GuideBuilderPageContainer>
+        <p className="text-sm text-gray-600">
+          {access.error ?? "Track not found."}
+        </p>
+      </GuideBuilderPageContainer>
+    );
   }
 
+  const track = access.track;
   const { stages } = await getStagesForTrack(trackId);
   const firstStage = stages[0];
 
   return (
-    <PageContainer>
+    <GuideBuilderPageContainer>
       <div className="mb-6">
         <Link
           href={`/guide/tracks/${trackId}/edit`}
@@ -120,6 +131,6 @@ export default async function TrackPreviewPage({ params }: PageProps) {
           </div>
         )}
       </Card>
-    </PageContainer>
+    </GuideBuilderPageContainer>
   );
 }

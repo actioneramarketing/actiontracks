@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { logout } from "@/lib/actions/auth";
+import { getCurrentUser, getCurrentGuide } from "@/lib/auth/guide";
 
-export function Nav() {
+export async function Nav() {
+  const user = await getCurrentUser();
+  const guide = user ? await getCurrentGuide() : null;
+
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -20,32 +25,42 @@ export function Nav() {
           >
             Library
           </Link>
-          <Link
-            href="/guide/tracks"
-            className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
-          >
-            Guide Dashboard
-          </Link>
+
+          {user ? (
+            <>
+              {guide ? (
+                <Link
+                  href="/guide/tracks"
+                  className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+                >
+                  Guide Dashboard
+                </Link>
+              ) : null}
+              <Link
+                href="/guide/profile"
+                className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+              >
+                Guide Profile
+              </Link>
+              <form action={logout}>
+                <button
+                  type="submit"
+                  className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+                >
+                  Logout
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+            >
+              Login
+            </Link>
+          )}
         </nav>
       </div>
     </header>
-  );
-}
-
-export function PageContainer({
-  children,
-  className = "",
-  wide = false,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  wide?: boolean;
-}) {
-  return (
-    <main
-      className={`mx-auto flex-1 px-4 py-8 sm:px-6 ${wide ? "max-w-7xl" : "max-w-6xl"} ${className}`}
-    >
-      {children}
-    </main>
   );
 }

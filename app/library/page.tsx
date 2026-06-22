@@ -1,4 +1,4 @@
-import { PageContainer } from "@/components/layout/Nav";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { DemoTrackCard } from "@/components/tracks/DemoTrackCard";
 import { Button } from "@/components/ui/Button";
 import { SectionHeader } from "@/components/ui/SectionHeader";

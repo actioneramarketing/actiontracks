@@ -1,9 +1,12 @@
 import { StageBuilderClient } from "@/components/tracks/StageBuilderClient";
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStageById } from "@/lib/actions/stages";
-import { getActionTrackById } from "@/lib/actions/tracks";
-import { PageContainer } from "@/components/layout/Nav";
+import { AccessPendingCard } from "@/components/auth/AccessPendingCard";
+import { TrackAccessDeniedCard } from "@/components/auth/TrackAccessDeniedCard";
+import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
+import { requireGuideTrackAccess } from "@/lib/auth/guide";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ trackId: string; stageId: string }>;
@@ -12,19 +15,23 @@ interface PageProps {
 export default async function StageBuilderPage({ params }: PageProps) {
   const { trackId, stageId } = await params;
 
-  const [{ track, error: trackError }, { stage, error: stageError }] =
-    await Promise.all([
-      getActionTrackById(trackId),
-      getStageById(stageId),
-    ]);
-
-  if (!track) {
+  const access = await requireGuideTrackAccess(trackId);
+  if (access.type === "redirect") {
+    redirect(access.to);
+  }
+  if (access.type === "pending") {
+    return <AccessPendingCard />;
+  }
+  if (access.type === "denied") {
+    return <TrackAccessDeniedCard />;
+  }
+  if (access.type === "not_found") {
     return (
-      <PageContainer>
+      <GuideBuilderPageContainer>
         <div className="py-16 text-center">
           <h1 className="text-xl font-semibold text-gray-900">Track not found</h1>
           <p className="mt-2 text-sm text-gray-600">
-            {trackError ?? "We could not find this Action Track."}
+            {access.error ?? "We could not find this Action Track."}
           </p>
           <Link
             href="/guide/tracks"
@@ -33,13 +40,15 @@ export default async function StageBuilderPage({ params }: PageProps) {
             Back to Manage Action Tracks
           </Link>
         </div>
-      </PageContainer>
+      </GuideBuilderPageContainer>
     );
   }
 
+  const { stage, error: stageError } = await getStageById(stageId);
+
   if (!stage || stage.track_id !== trackId) {
     return (
-      <PageContainer>
+      <GuideBuilderPageContainer>
         <div className="py-16 text-center">
           <h1 className="text-xl font-semibold text-gray-900">Stage not found</h1>
           <p className="mt-2 text-sm text-gray-600">
@@ -52,7 +61,7 @@ export default async function StageBuilderPage({ params }: PageProps) {
             Back to Stages
           </Link>
         </div>
-      </PageContainer>
+      </GuideBuilderPageContainer>
     );
   }
 
@@ -60,7 +69,7 @@ export default async function StageBuilderPage({ params }: PageProps) {
 
   return (
     <StageBuilderClient
-      track={track}
+      track={access.track}
       stage={stage}
       elements={elements}
       trackId={trackId}

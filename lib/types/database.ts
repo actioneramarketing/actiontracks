@@ -11,6 +11,25 @@ export type StageElementType =
   | "completion_submission"
   | "reward_activation";
 
+export interface GuideProfile {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string;
+  bio: string;
+  status: string;
+  profile_headline: string;
+  website_url: string;
+  social_url: string;
+  profile_image_url: string;
+  public_email: string;
+  guide_slug: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** @deprecated Use GuideProfile */
 export interface ActionTrackGuide {
   id: string;
   name: string | null;
