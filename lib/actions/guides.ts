@@ -293,10 +293,13 @@ export async function updateGuideProfile(
 
     if (error) {
       console.error("[updateGuideProfile] Supabase update failed", {
+        action: "updateGuideProfile",
         guideId: guide.id,
+        payloadKeys: Object.keys(payload),
         message: error.message,
         code: error.code,
-        payloadKeys: Object.keys(payload),
+        details: error.details,
+        hint: error.hint,
       });
       return { error: "Failed to save profile. Please try again." };
     }
@@ -305,7 +308,10 @@ export async function updateGuideProfile(
     revalidatePath("/guide/tracks");
     return { success: true };
   } catch (error) {
-    console.error("[updateGuideProfile] Unexpected error", { error });
+    console.error("[updateGuideProfile] Unexpected error", {
+      action: "updateGuideProfile",
+      error,
+    });
     const message =
       error instanceof SupabaseConfigError
         ? error.message

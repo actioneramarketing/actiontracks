@@ -13,6 +13,7 @@ import { ProfileImageUpload } from "@/components/guide/ProfileImageUpload";
 import { GuideProfilePreview } from "@/components/guide/GuideProfilePreview";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 interface GuideProfileEditorProps {
@@ -20,6 +21,7 @@ interface GuideProfileEditorProps {
 }
 
 export function GuideProfileEditor({ guide }: GuideProfileEditorProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,15 @@ export function GuideProfileEditor({ guide }: GuideProfileEditorProps) {
     setMessage(null);
     setError(null);
 
+    // Controlled fields must be written explicitly — React FormData from
+    // form actions can omit textarea values when passed async to server actions.
     formData.set("profile_image_url", profileImageUrl);
+    formData.set("full_name", fullName);
+    formData.set("profile_headline", profileHeadline);
+    formData.set("bio", bio);
+    formData.set("website_url", websiteUrl);
+    formData.set("public_email", publicEmail);
+    formData.set("guide_slug", guideSlug);
 
     startTransition(async () => {
       const result = await updateGuideProfile(formData);
@@ -54,6 +64,7 @@ export function GuideProfileEditor({ guide }: GuideProfileEditorProps) {
         return;
       }
       setMessage("Profile saved.");
+      router.refresh();
       setWebsiteUrl(normalizeOptionalUrl(String(formData.get("website_url") ?? "")));
       setSocialLinks({
         facebook: normalizeOptionalUrl(String(formData.get("social_facebook") ?? "")),
