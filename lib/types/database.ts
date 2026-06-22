@@ -56,6 +56,8 @@ export interface ActionTrack {
   end_date: string;
   visibility: string;
   hero_image_url: string;
+  track_image_url: string;
+  track_icon_url: string;
   reward_title: string;
   guide_id: string;
   settings_json: Record<string, unknown>;
@@ -108,4 +110,6 @@ export interface ActionTrackListItem {
   trackType: string;
   startDate: string;
   endDate: string;
+  trackImageUrl: string;
+  trackIconUrl: string;
 }

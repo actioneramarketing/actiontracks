@@ -2,6 +2,7 @@ import { BuilderPageHeader } from "@/components/builder/BuilderPageHeader";
 import { BuilderFormField, BuilderSelectField } from "@/components/builder/BuilderFormField";
 import { FormSection } from "@/components/builder/FormSection";
 import { HelpCard } from "@/components/builder/HelpCard";
+import { ActionTrackAssetsSection } from "@/components/tracks/ActionTrackAssetsSection";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
@@ -86,6 +87,17 @@ export default function NewTrackPage() {
                 <BuilderFormField label="Start Date" name="start_date" type="date" />
                 <BuilderFormField label="End Date" name="end_date" type="date" />
               </div>
+            </FormSection>
+
+            <FormSection
+              title="Action Track Assets"
+              description="Optional visuals for your dashboard and future participant-facing pages."
+            >
+              <ActionTrackAssetsSection trackId="new" />
+              <p className="text-xs text-gray-500">
+                Assets are optional. You can also add or replace them after saving
+                from the track editor.
+              </p>
             </FormSection>
 
             <div className="pt-6 border-t border-gray-100 flex items-center gap-3">

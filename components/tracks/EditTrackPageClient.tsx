@@ -6,9 +6,11 @@ import { BuilderPageHeader } from "@/components/builder/BuilderPageHeader";
 import { BuilderFormField, BuilderSelectField } from "@/components/builder/BuilderFormField";
 import { FormSection } from "@/components/builder/FormSection";
 import { BuilderComingSoonCard } from "@/components/tracks/BuilderComingSoonCard";
+import { ActionTrackAssetsSection } from "@/components/tracks/ActionTrackAssetsSection";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 const tabs = [
@@ -26,6 +28,7 @@ interface EditTrackPageClientProps {
 }
 
 export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("Track Details");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -35,6 +38,7 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
     startTransition(async () => {
       try {
         await updateActionTrack(trackId, formData);
+        router.refresh();
         setMessage("Changes saved.");
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Failed to save track.");
@@ -50,6 +54,7 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
         title={track.title || "Untitled Action Track"}
         subtitle="Edit track details, schedule, and participant-facing settings."
         status={track.status}
+        trackIconUrl={track.track_icon_url || undefined}
         actions={
           <>
             <Button href={`/guide/tracks/${trackId}/stages`} variant="secondary">
@@ -160,6 +165,17 @@ export function EditTrackPageClient({ track, trackId }: EditTrackPageClientProps
                 <option value="active">Active</option>
                 <option value="archived">Archived</option>
               </BuilderSelectField>
+            </FormSection>
+
+            <FormSection
+              title="Action Track Assets"
+              description="Upload a cover image and icon for this Action Track."
+            >
+              <ActionTrackAssetsSection
+                trackId={trackId}
+                trackImageUrl={track.track_image_url}
+                trackIconUrl={track.track_icon_url}
+              />
             </FormSection>
 
             <div className="pt-6 border-t border-gray-100 flex flex-wrap items-center gap-3">

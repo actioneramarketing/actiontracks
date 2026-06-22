@@ -98,6 +98,8 @@ export function normalizeActionTrack(raw: unknown): NormalizedActionTrack | null
     end_date: normalizeDateForInput(row.end_date),
     visibility: asString(row.visibility),
     hero_image_url: asString(row.hero_image_url),
+    track_image_url: asString(row.track_image_url),
+    track_icon_url: asString(row.track_icon_url),
     reward_title: asString(row.reward_title),
     guide_id: asString(row.guide_id),
     settings_json: normalizeSettingsJson(row.settings_json),

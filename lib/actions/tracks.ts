@@ -41,6 +41,8 @@ function mapTrackToListItem(
     trackType: track.track_type,
     startDate: track.start_date,
     endDate: track.end_date,
+    trackImageUrl: track.track_image_url,
+    trackIconUrl: track.track_icon_url,
   };
 }
 
@@ -265,6 +267,25 @@ export async function getActionTrackBySlug(
   }
 }
 
+function optionalFormString(formData: FormData, name: string): string | null {
+  const value = String(formData.get(name) ?? "").trim();
+  return value || null;
+}
+
+function optionalFormDate(formData: FormData, name: string): string | null {
+  const value = String(formData.get(name) ?? "").trim();
+  return value || null;
+}
+
+function parseDurationWeeks(formData: FormData): number {
+  const raw = String(formData.get("duration_weeks") ?? "").trim();
+  if (!raw) {
+    return 6;
+  }
+  const num = Number(raw);
+  return Number.isFinite(num) && num > 0 ? num : 6;
+}
+
 export async function createActionTrack(formData: FormData) {
   const auth = await requireGuide();
 
@@ -309,6 +330,8 @@ export async function createActionTrack(formData: FormData) {
     status: "draft",
     start_date: String(formData.get("start_date") ?? "").trim() || null,
     end_date: String(formData.get("end_date") ?? "").trim() || null,
+    track_image_url: optionalFormString(formData, "track_image_url"),
+    track_icon_url: optionalFormString(formData, "track_icon_url"),
   };
 
   const { data, error } = await supabase
@@ -323,25 +346,6 @@ export async function createActionTrack(formData: FormData) {
 
   revalidatePath("/guide/tracks");
   redirect(`/guide/tracks/${data.id}/edit`);
-}
-
-function optionalFormString(formData: FormData, name: string): string | null {
-  const value = String(formData.get(name) ?? "").trim();
-  return value || null;
-}
-
-function optionalFormDate(formData: FormData, name: string): string | null {
-  const value = String(formData.get(name) ?? "").trim();
-  return value || null;
-}
-
-function parseDurationWeeks(formData: FormData): number {
-  const raw = String(formData.get("duration_weeks") ?? "").trim();
-  if (!raw) {
-    return 6;
-  }
-  const num = Number(raw);
-  return Number.isFinite(num) && num > 0 ? num : 6;
 }
 
 export async function updateActionTrack(trackId: string, formData: FormData) {
@@ -364,6 +368,8 @@ export async function updateActionTrack(trackId: string, formData: FormData) {
       duration_weeks: parseDurationWeeks(formData),
       start_date: optionalFormDate(formData, "start_date"),
       end_date: optionalFormDate(formData, "end_date"),
+      track_image_url: optionalFormString(formData, "track_image_url"),
+      track_icon_url: optionalFormString(formData, "track_icon_url"),
       updated_at: new Date().toISOString(),
     };
 

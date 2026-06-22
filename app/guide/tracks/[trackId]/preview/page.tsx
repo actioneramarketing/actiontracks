@@ -51,9 +51,20 @@ export default async function TrackPreviewPage({ params }: PageProps) {
       </div>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Track Preview</h1>
-      <p className="text-gray-600 mb-8">
+      <p className="text-gray-600 mb-6">
         Preview the participant experience for {track.title}.
       </p>
+
+      {track.track_image_url ? (
+        <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 shadow-sm aspect-video max-w-2xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={track.track_image_url}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : null}
 
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
         <Card>

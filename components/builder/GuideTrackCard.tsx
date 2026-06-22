@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ActionTrackListItem } from "@/lib/types/database";
+import { getTrackInitials } from "@/lib/utils/action-track-assets";
 
 const TRACK_TYPE_LABELS: Record<string, string> = {
   live_guided: "Live Guided",
@@ -39,23 +40,47 @@ export function GuideTrackCard({ track }: GuideTrackCardProps) {
   const trackTypeLabel = track.trackType
     ? formatTrackType(track.trackType)
     : null;
+  const initials = getTrackInitials(track.title);
 
   return (
     <Card padding="none" className="flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
       <div className="relative aspect-video bg-gradient-to-br from-teal-50 via-gray-50 to-violet-50 border-b border-gray-100">
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <span className="text-3xl mb-2 opacity-80" aria-hidden>
-            🎯
-          </span>
-          <p className="text-xs font-medium text-gray-500">Track Image Coming Soon</p>
-        </div>
+        {track.trackImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={track.trackImageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+            <span className="text-3xl mb-2 opacity-80" aria-hidden>
+              🎯
+            </span>
+            <p className="text-xs font-medium text-gray-500">Track Image Coming Soon</p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col flex-1 p-5">
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 leading-snug line-clamp-2">
-            {track.title}
-          </h3>
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-teal-50 text-sm font-bold text-teal-700">
+              {track.trackIconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={track.trackIconUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initials
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 leading-snug line-clamp-2">
+              {track.title}
+            </h3>
+          </div>
           <StatusBadge status={track.status} />
         </div>
 
