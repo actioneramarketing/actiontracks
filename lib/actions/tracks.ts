@@ -38,6 +38,9 @@ function mapTrackToListItem(
     guideName,
     durationWeeks: track.duration_weeks,
     status: track.status,
+    trackType: track.track_type,
+    startDate: track.start_date,
+    endDate: track.end_date,
   };
 }
 

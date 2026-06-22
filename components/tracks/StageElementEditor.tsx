@@ -57,11 +57,12 @@ export function StageElementsSection({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5 pb-4 border-b border-gray-100">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Stage Elements</h2>
+          <h2 className="text-base font-semibold text-gray-900">Stage Elements</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Track Feed is included automatically on every stage.
+            Add interactive elements participants will use in this stage. Track Feed
+            is included automatically.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -70,7 +71,7 @@ export function StageElementsSection({
             onChange={(e) =>
               setElementType(e.target.value as AddableStageElementType)
             }
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           >
             {ADDABLE_STAGE_ELEMENT_TYPES.map((type) => (
               <option key={type} value={type}>
@@ -95,7 +96,7 @@ export function StageElementsSection({
       )}
 
       {builderElements.length === 0 ? (
-        <Card className="text-sm text-gray-500">
+        <Card className="text-sm text-gray-500 text-center py-8 bg-gray-50 border-dashed">
           No elements yet. Choose a type and click Add Element.
         </Card>
       ) : (
@@ -207,9 +208,11 @@ function StageElementEditorCard({
 
   return (
     <div
-      className={`rounded-xl border bg-white ${
-        element.is_enabled ? "border-teal-200" : "border-gray-200"
-      } ${isOpen ? "shadow-sm" : ""}`}
+      className={`rounded-xl border bg-white shadow-sm transition-shadow ${
+        element.is_enabled
+          ? "border-teal-200/80 hover:border-teal-300"
+          : "border-gray-200 hover:border-gray-300"
+      } ${isOpen ? "ring-1 ring-teal-100" : ""}`}
     >
       <div className="flex items-start gap-2 p-4">
         <button
@@ -217,27 +220,27 @@ function StageElementEditorCard({
           onClick={onToggle}
           className="flex flex-1 items-start gap-3 text-left min-w-0"
         >
-          <span className="text-xl shrink-0">{icon}</span>
+          <span className="text-2xl shrink-0 leading-none mt-0.5">{icon}</span>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded bg-gray-100 px-1.5 text-xs font-medium text-gray-600">
-                {orderNumber}
+              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-gray-100 px-1.5 text-xs font-semibold text-gray-700">
+                #{orderNumber}
               </span>
-              <h4 className="font-medium text-gray-900">
+              <h4 className="font-semibold text-gray-900">
                 {element.title ?? label}
               </h4>
-              <span className="text-xs text-gray-400">{label}</span>
+              <span className="text-xs text-gray-400 font-medium">{label}</span>
               {element.is_enabled ? (
-                <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700">
+                <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-teal-100">
                   Enabled
                 </span>
               ) : (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
                   Disabled
                 </span>
               )}
               {element.is_required && (
-                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-100">
                   Required
                 </span>
               )}
@@ -281,7 +284,7 @@ function StageElementEditorCard({
       {isOpen && (
         <form
           action={handleSave}
-          className="border-t border-gray-100 px-4 pb-4 pt-3 space-y-4"
+          className="border-t border-gray-100 px-4 pb-5 pt-4 space-y-4 bg-gray-50/50 rounded-b-xl"
         >
           <input type="hidden" name="track_id" value={trackId} />
           <input type="hidden" name="stage_id" value={stageId} />
@@ -358,7 +361,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">
         {label}
       </label>
       {textarea ? (
@@ -366,14 +369,14 @@ function FormField({
           name={name}
           defaultValue={defaultValue}
           rows={2}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm bg-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
       ) : (
         <input
           type={type}
           name={name}
           defaultValue={defaultValue}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm bg-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
       )}
     </div>

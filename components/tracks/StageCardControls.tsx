@@ -54,7 +54,7 @@ export function StageCardControls({
   }
 
   return (
-    <div className="mt-4">
+    <div className="mt-5 pt-4 border-t border-gray-100">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
@@ -63,6 +63,7 @@ export function StageCardControls({
           disabled={isFirst || isPending}
           onClick={() => handleMove("up")}
           aria-label="Move stage up"
+          className="text-gray-600"
         >
           ↑ Move Up
         </Button>
@@ -73,6 +74,7 @@ export function StageCardControls({
           disabled={isLast || isPending}
           onClick={() => handleMove("down")}
           aria-label="Move stage down"
+          className="text-gray-600"
         >
           ↓ Move Down
         </Button>
@@ -89,7 +91,7 @@ export function StageCardControls({
           size="sm"
           disabled={isPending}
           onClick={handleDelete}
-          className="text-red-700 border-red-200 hover:bg-red-50"
+          className="text-red-700 border-red-200 hover:bg-red-50 hover:border-red-300"
         >
           Delete Stage
         </Button>

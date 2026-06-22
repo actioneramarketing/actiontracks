@@ -6,11 +6,15 @@ import {
   filterBuilderVisibleElements,
 } from "@/lib/constants/element-types";
 import { ActionTrack, ActionTrackStage, StageElement } from "@/lib/types/database";
+import { BuilderPageHeader } from "@/components/builder/BuilderPageHeader";
+import { BuilderFormField } from "@/components/builder/BuilderFormField";
+import { FormSection } from "@/components/builder/FormSection";
+import { HelpCard } from "@/components/builder/HelpCard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { StageElementsSection } from "@/components/tracks/StageElementEditor";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -53,136 +57,160 @@ export function StageBuilderClient({
   );
 
   return (
-    <PageContainer wide>
-      <div className="mb-6">
-        <Link
-          href={`/guide/tracks/${trackId}/stages`}
-          className="text-sm text-gray-500 hover:text-teal-700"
-        >
-          ← Back to Stages
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mt-2">
-          Stage {stage.stage_number}: {stage.title}
-        </h1>
-        <p className="text-gray-600">{track.title}</p>
-      </div>
+    <PageContainer wide className="max-w-6xl">
+      <BuilderPageHeader
+        backHref={`/guide/tracks/${trackId}/stages`}
+        backLabel="Back to Stages"
+        title={`Stage ${stage.stage_number}: ${stage.title}`}
+        subtitle={track.title}
+        actions={
+          stage.is_final_stage ? (
+            <Badge variant="purple">Final Stage</Badge>
+          ) : undefined
+        }
+      />
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_300px] gap-6">
+        <div className="space-y-6">
+          <Card padding="lg" className="shadow-sm">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
               Stage Settings
             </h2>
-            <form action={handleStageSave} className="space-y-4">
+            <p className="text-sm text-gray-500 mb-6">
+              Configure how participants experience this stage.
+            </p>
+            <form action={handleStageSave} className="space-y-6">
               <input type="hidden" name="track_id" value={trackId} />
-              <FormField label="Stage Title" name="title" defaultValue={stage.title} required />
-              <FormField
-                label="Stage Subtitle"
-                name="subtitle"
-                defaultValue={stage.subtitle ?? ""}
-              />
-              <FormField
-                label="Stage Goal"
-                name="stage_goal"
-                defaultValue={stage.stage_goal ?? ""}
-                textarea
-              />
-              <FormField
-                label="Stage Summary"
-                name="stage_summary"
-                defaultValue={stage.stage_summary ?? ""}
-                textarea
-              />
-              <FormField
-                label="What You'll Accomplish"
-                name="what_youll_accomplish"
-                defaultValue={stage.what_youll_accomplish ?? ""}
-                textarea
-              />
-              <FormField
-                label="Next Action Title"
-                name="next_action_title"
-                defaultValue={stage.next_action_title ?? ""}
-              />
-              <FormField
-                label="Next Action Description"
-                name="next_action_description"
-                defaultValue={stage.next_action_description ?? ""}
-                textarea
-              />
-              <FormField
-                label="Unlock Type"
-                name="unlock_type"
-                defaultValue={stage.unlock_type ?? ""}
-                placeholder="e.g. sequential, immediate"
-              />
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  name="is_final_stage"
-                  defaultChecked={stage.is_final_stage}
-                  className="rounded border-gray-300"
+
+              <FormSection title="Basics">
+                <BuilderFormField
+                  label="Stage Title"
+                  name="title"
+                  defaultValue={stage.title}
+                  required
                 />
-                Final stage
-              </label>
-              <div className="pt-2 flex items-center gap-3">
+                <BuilderFormField
+                  label="Stage Subtitle"
+                  name="subtitle"
+                  defaultValue={stage.subtitle ?? ""}
+                />
+                <BuilderFormField
+                  label="Stage Goal"
+                  name="stage_goal"
+                  defaultValue={stage.stage_goal ?? ""}
+                  textarea
+                  rows={2}
+                />
+                <BuilderFormField
+                  label="Stage Summary"
+                  name="stage_summary"
+                  defaultValue={stage.stage_summary ?? ""}
+                  textarea
+                  rows={2}
+                  hint="Internal or participant-facing summary of this stage."
+                />
+              </FormSection>
+
+              <FormSection title="Participant guidance">
+                <BuilderFormField
+                  label="What You'll Accomplish"
+                  name="what_youll_accomplish"
+                  defaultValue={stage.what_youll_accomplish ?? ""}
+                  textarea
+                  rows={2}
+                />
+                <BuilderFormField
+                  label="Next Action Title"
+                  name="next_action_title"
+                  defaultValue={stage.next_action_title ?? ""}
+                />
+                <BuilderFormField
+                  label="Next Action Description"
+                  name="next_action_description"
+                  defaultValue={stage.next_action_description ?? ""}
+                  textarea
+                  rows={2}
+                />
+              </FormSection>
+
+              <FormSection title="Advanced">
+                <BuilderFormField
+                  label="Unlock Type"
+                  name="unlock_type"
+                  defaultValue={stage.unlock_type ?? ""}
+                  placeholder="e.g. sequential, immediate"
+                />
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="is_final_stage"
+                    defaultChecked={stage.is_final_stage}
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  Final stage
+                </label>
+              </FormSection>
+
+              <div className="pt-4 border-t border-gray-100 flex items-center gap-3">
                 <Button type="submit" variant="primary" disabled={isPending}>
                   {isPending ? "Saving..." : "Save Stage"}
                 </Button>
                 {stageMessage && (
-                  <span className="text-sm text-gray-600">{stageMessage}</span>
+                  <span className="text-sm text-teal-700">{stageMessage}</span>
                 )}
               </div>
             </form>
           </Card>
 
-          <StageElementsSection
-            elements={elements}
-            trackId={trackId}
-            stageId={stageId}
-          />
+          <Card padding="lg" className="shadow-sm">
+            <StageElementsSection
+              elements={elements}
+              trackId={trackId}
+              stageId={stageId}
+            />
+          </Card>
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-gradient-to-br from-teal-50 to-white">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <Card padding="lg" className="bg-gradient-to-br from-teal-50/80 to-white border-teal-100/80 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">
               Stage Preview
             </h2>
-            <div className="rounded-lg bg-white p-4 border border-teal-100">
-              <p className="text-xs font-medium text-teal-600 uppercase tracking-wide">
+            <div className="rounded-xl bg-white p-4 border border-teal-100 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-teal-600">
                 Stage {stage.stage_number}
               </p>
               <h3 className="font-semibold text-gray-900 mt-1">{stage.title}</h3>
               <p className="text-sm text-gray-500 mt-1">
                 {stage.subtitle ?? stage.stage_goal}
               </p>
-              {stage.what_youll_accomplish && (
-                <p className="text-sm text-gray-600 mt-2">
+              {stage.what_youll_accomplish ? (
+                <p className="text-sm text-gray-600 mt-3 leading-relaxed">
                   {stage.what_youll_accomplish}
                 </p>
-              )}
-              {stage.next_action_title && (
-                <p className="text-sm text-gray-700 mt-2 font-medium">
+              ) : null}
+              {stage.next_action_title ? (
+                <p className="text-sm text-gray-800 mt-3 font-medium">
                   Next: {stage.next_action_title}
                 </p>
-              )}
-              {stage.is_final_stage && (
-                <p className="text-xs text-violet-700 mt-2 font-medium">
+              ) : null}
+              {stage.is_final_stage ? (
+                <p className="text-xs text-violet-700 mt-3 font-semibold uppercase tracking-wide">
                   Final Stage
                 </p>
-              )}
-              {enabledElements.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
+              ) : null}
+              {enabledElements.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-1.5">
                   {enabledElements.map((el) => (
                     <span
                       key={el.id}
-                      className="text-xs bg-gray-50 px-2 py-0.5 rounded ring-1 ring-gray-200"
+                      className="text-xs bg-gray-50 px-2 py-0.5 rounded-full ring-1 ring-gray-200"
                     >
                       {el.title ?? ELEMENT_TYPE_LABELS[el.element_type]}
                     </span>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
             <Button
               href={`/track/${track.slug}/stages/${stage.slug}`}
@@ -194,69 +222,15 @@ export function StageBuilderClient({
             </Button>
           </Card>
 
-          <Card>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Builder Help
-            </h2>
-            <ul className="space-y-3 text-sm text-gray-600">
-              <li className="flex gap-2">
-                <span className="text-teal-600">1.</span>
-                Configure stage settings to define the participant experience.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-teal-600">2.</span>
-                Add and configure support elements for this stage.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-teal-600">3.</span>
-                Use the preview to see how participants will experience the stage.
-              </li>
-            </ul>
-          </Card>
+          <HelpCard title="Builder Help">
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>Configure stage settings to define the participant experience.</li>
+              <li>Add and configure support elements for this stage.</li>
+              <li>Use the preview to see how participants will experience the stage.</li>
+            </ol>
+          </HelpCard>
         </div>
       </div>
     </PageContainer>
-  );
-}
-
-function FormField({
-  label,
-  name,
-  defaultValue,
-  placeholder,
-  textarea = false,
-  required,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string;
-  placeholder?: string;
-  textarea?: boolean;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-        {label}
-      </label>
-      {textarea ? (
-        <textarea
-          name={name}
-          defaultValue={defaultValue}
-          placeholder={placeholder}
-          rows={2}
-          required={required}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
-        />
-      ) : (
-        <input
-          name={name}
-          defaultValue={defaultValue}
-          placeholder={placeholder}
-          required={required}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm"
-        />
-      )}
-    </div>
   );
 }

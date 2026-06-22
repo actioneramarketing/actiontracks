@@ -1,6 +1,7 @@
-import { DemoTrackCard } from "@/components/tracks/DemoTrackCard";
+import { GuideTrackCard } from "@/components/builder/GuideTrackCard";
+import { BuilderPageHeader } from "@/components/builder/BuilderPageHeader";
+import { EmptyState } from "@/components/builder/EmptyState";
 import { Button } from "@/components/ui/Button";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
 import { requireGuide } from "@/lib/auth/guide";
 import { getActionTracksForGuide } from "@/lib/actions/tracks";
@@ -15,39 +16,34 @@ async function GuideTracksContent() {
 
   return (
     <>
-      <SectionHeader
+      <BuilderPageHeader
         title="Manage Action Tracks"
-        description="Create and manage your guided implementation journeys."
-        action={
+        subtitle="Create and manage the guided journeys connected to your guide profile."
+        actions={
           <Button href="/guide/tracks/new" variant="primary">
             Create New Action Track
           </Button>
         }
-        className="mb-8"
       />
 
       {error && (
-        <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+        <p className="mb-6 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
           {error}
         </p>
       )}
 
       {tracks.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center">
-          <h2 className="text-lg font-semibold text-gray-900">
-            No Action Tracks yet
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Create your first Action Track to start building stages and elements.
-          </p>
-          <Button href="/guide/tracks/new" variant="primary" className="mt-6">
-            Create Your First Action Track
-          </Button>
-        </div>
+        <EmptyState
+          icon="🎯"
+          title="No Action Tracks yet"
+          description="Create your first Action Track to start building stages, elements, and participant journeys."
+          actionLabel="Create Your First Action Track"
+          actionHref="/guide/tracks/new"
+        />
       ) : (
-        <div className="grid sm:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
           {tracks.map((track) => (
-            <DemoTrackCard key={track.id} track={track} variant="guide" />
+            <GuideTrackCard key={track.id} track={track} />
           ))}
         </div>
       )}
@@ -57,7 +53,7 @@ async function GuideTracksContent() {
 
 export default async function GuideTracksPage() {
   return (
-    <GuideBuilderPageContainer>
+    <GuideBuilderPageContainer className="max-w-6xl">
       <GuideTracksContent />
     </GuideBuilderPageContainer>
   );

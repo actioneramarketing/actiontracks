@@ -1,6 +1,7 @@
 import { AddStageForm } from "@/components/tracks/AddStageForm";
 import { StageCard } from "@/components/tracks/StageCard";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { BuilderPageHeader } from "@/components/builder/BuilderPageHeader";
+import { EmptyState } from "@/components/builder/EmptyState";
 import { AccessPendingCard } from "@/components/auth/AccessPendingCard";
 import { TrackAccessDeniedCard } from "@/components/auth/TrackAccessDeniedCard";
 import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
@@ -11,6 +12,7 @@ import {
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStagesForTrack } from "@/lib/actions/stages";
 import { requireGuideTrackAccess } from "@/lib/auth/guide";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -33,7 +35,7 @@ export default async function StagesListPage({ params }: PageProps) {
   }
   if (access.type === "not_found") {
     return (
-      <GuideBuilderPageContainer>
+      <GuideBuilderPageContainer className="max-w-5xl">
         <div className="py-16 text-center">
           <h1 className="text-xl font-semibold text-gray-900">Track not found</h1>
           <p className="mt-2 text-sm text-gray-600">
@@ -75,39 +77,41 @@ export default async function StagesListPage({ params }: PageProps) {
   );
 
   return (
-    <GuideBuilderPageContainer>
-      <div className="mb-6">
-        <Link
-          href={`/guide/tracks/${trackId}/edit`}
-          className="text-sm text-gray-500 hover:text-teal-700"
-        >
-          ← Back to Edit Track
-        </Link>
-      </div>
-
-      <SectionHeader
+    <GuideBuilderPageContainer className="max-w-5xl">
+      <BuilderPageHeader
+        backHref={`/guide/tracks/${trackId}/edit`}
+        backLabel="Back to Edit Track"
         title="Manage Stages"
-        description={`${track.title} — ${stages.length} stage${stages.length === 1 ? "" : "s"}`}
-        className="mb-6"
+        subtitle={`${track.title} — ${stages.length} stage${stages.length === 1 ? "" : "s"}`}
+        actions={
+          <Button href={`/guide/tracks/${trackId}/preview`} variant="secondary">
+            Preview Track
+          </Button>
+        }
       />
 
       {stagesError && (
-        <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+        <p className="mb-6 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
           {stagesError}
         </p>
       )}
 
-      <AddStageForm trackId={trackId} />
+      <AddStageForm
+        trackId={trackId}
+        defaultExpanded={stagesWithElements.length === 0}
+      />
 
       {stagesWithElements.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-          <h2 className="text-lg font-semibold text-gray-900">No stages yet</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Use the form above to add your first stage. It will become Stage 1.
-          </p>
-        </div>
+        <EmptyState
+          icon="🗺️"
+          title="No stages yet"
+          description="Use the form above to add your first stage. It will become Stage 1 in your participant journey."
+        />
       ) : (
         <div className="space-y-4">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            Your Stages
+          </h2>
           {stagesWithElements.map((stage, index) => (
             <StageCard
               key={stage.id}

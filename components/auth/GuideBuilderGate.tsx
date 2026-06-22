@@ -29,13 +29,17 @@ export async function GuideBuilderGate({ children }: GuideBuilderGateProps) {
 export async function GuideBuilderPageContainer({
   children,
   wide = false,
+  className = "",
 }: {
   children: ReactNode;
   wide?: boolean;
+  className?: string;
 }) {
   return (
     <GuideBuilderGate>
-      <PageContainer wide={wide}>{children}</PageContainer>
+      <PageContainer wide={wide} className={className}>
+        {children}
+      </PageContainer>
     </GuideBuilderGate>
   );
 }

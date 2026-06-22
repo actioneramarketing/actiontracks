@@ -105,4 +105,7 @@ export interface ActionTrackListItem {
   guideName: string;
   durationWeeks: number;
   status: TrackStatus;
+  trackType: string;
+  startDate: string;
+  endDate: string;
 }
