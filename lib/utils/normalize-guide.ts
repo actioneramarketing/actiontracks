@@ -1,4 +1,5 @@
 import { GuideProfile } from "@/lib/types/database";
+import { normalizeSocialLinks } from "@/lib/utils/guide-social-links";
 
 function asString(value: unknown, fallback = ""): string {
   if (typeof value === "string") {
@@ -35,6 +36,7 @@ export function normalizeGuideProfile(raw: unknown): GuideProfile | null {
     profile_image_url: asString(row.profile_image_url),
     public_email: asString(row.public_email),
     guide_slug: asString(row.guide_slug),
+    social_links: normalizeSocialLinks(row.social_links, asString(row.social_url)),
     created_at: asString(row.created_at, new Date().toISOString()),
     updated_at: asString(row.updated_at, new Date().toISOString()),
   };

@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { GuideProfileForm } from "@/components/guide/GuideProfileForm";
+import { GuideProfileEditor } from "@/components/guide/GuideProfileEditor";
 import { requireGuideForProfilePage } from "@/lib/auth/guide";
 import { redirect } from "next/navigation";
 
@@ -9,8 +9,8 @@ export default async function GuideProfilePage() {
     auth = await requireGuideForProfilePage();
   } catch {
     return (
-      <PageContainer>
-        <div className="max-w-xl mx-auto rounded-xl border border-red-100 bg-red-50 p-6 text-center">
+      <PageContainer className="max-w-4xl">
+        <div className="rounded-xl border border-red-100 bg-red-50 p-6 text-center">
           <h1 className="text-lg font-semibold text-gray-900">
             Unable to load profile
           </h1>
@@ -27,14 +27,14 @@ export default async function GuideProfilePage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer className="max-w-4xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Guide Profile</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Manage your public guide profile and account details.
+          Manage the profile connected to your Action Tracks.
         </p>
       </div>
-      <GuideProfileForm guide={auth.guide} />
+      <GuideProfileEditor guide={auth.guide} />
     </PageContainer>
   );
 }

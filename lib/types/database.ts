@@ -1,5 +1,7 @@
 export type TrackStatus = "active" | "draft" | "archived";
 
+import type { GuideSocialLinks } from "@/lib/utils/guide-social-links";
+
 export type StageElementType =
   | "live_call"
   | "commitment_builder"
@@ -25,6 +27,7 @@ export interface GuideProfile {
   profile_image_url: string;
   public_email: string;
   guide_slug: string;
+  social_links: GuideSocialLinks;
   created_at: string;
   updated_at: string;
 }

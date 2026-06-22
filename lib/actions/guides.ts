@@ -8,6 +8,8 @@ import {
 import { GuideProfile } from "@/lib/types/database";
 import { normalizeGuideProfile } from "@/lib/utils/normalize-guide";
 import { slugify } from "@/lib/utils/slug";
+import { normalizeOptionalUrl } from "@/lib/utils/guide-profile-urls";
+import { socialLinksFromFormData } from "@/lib/utils/guide-social-links";
 import { revalidatePath } from "next/cache";
 
 function normalizeEmail(email: string): string {
@@ -261,17 +263,26 @@ export async function updateGuideProfile(
       }
     }
 
+    const socialLinks = socialLinksFromFormData(formData);
+    const profileImageUrl =
+      String(formData.get("profile_image_url") ?? "").trim() ||
+      guide.profile_image_url ||
+      null;
+
     const payload = {
       full_name: String(formData.get("full_name") ?? "").trim() || null,
       profile_headline:
         String(formData.get("profile_headline") ?? "").trim() || null,
       bio: String(formData.get("bio") ?? "").trim() || null,
-      profile_image_url:
-        String(formData.get("profile_image_url") ?? "").trim() || null,
-      website_url: String(formData.get("website_url") ?? "").trim() || null,
-      social_url: String(formData.get("social_url") ?? "").trim() || null,
+      profile_image_url: profileImageUrl,
+      avatar_url: profileImageUrl,
+      website_url: normalizeOptionalUrl(
+        String(formData.get("website_url") ?? "")
+      ) || null,
+      social_url: socialLinks.other || null,
       public_email: String(formData.get("public_email") ?? "").trim() || null,
       guide_slug: guideSlug,
+      social_links: socialLinks,
       updated_at: new Date().toISOString(),
     };
 
@@ -299,6 +310,57 @@ export async function updateGuideProfile(
       error instanceof SupabaseConfigError
         ? error.message
         : "Failed to save profile. Please try again.";
+    return { error: message };
+  }
+}
+
+export async function saveGuideProfileImage(
+  imageUrl: string
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    const trimmedUrl = imageUrl.trim();
+    if (!trimmedUrl) {
+      return { error: "Image URL is required." };
+    }
+
+    const { getCurrentUser } = await import("@/lib/auth/guide");
+    const user = await getCurrentUser();
+    if (!user) {
+      return { error: "You must be logged in to upload a profile image." };
+    }
+
+    const guide = await getGuideByUserId(user.id);
+    if (!guide) {
+      return { error: "Guide profile not found." };
+    }
+
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("action_track_guides")
+      .update({
+        profile_image_url: trimmedUrl,
+        avatar_url: trimmedUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", guide.id);
+
+    if (error) {
+      console.error("[saveGuideProfileImage] Supabase update failed", {
+        guideId: guide.id,
+        message: error.message,
+        code: error.code,
+      });
+      return { error: "Failed to save profile image. Please try again." };
+    }
+
+    revalidatePath("/guide/profile");
+    return { success: true };
+  } catch (error) {
+    console.error("[saveGuideProfileImage] Unexpected error", { error });
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : "Failed to save profile image. Please try again.";
     return { error: message };
   }
 }
