@@ -11,6 +11,8 @@ import {
   DEFAULT_ELEMENT_UX_STYLE,
   ELEMENT_UX_STYLES,
 } from "./element-ux-styles";
+import { getResourcesCount } from "./elements/ResourcesElement";
+import { formatResourceCountLabel } from "@/lib/utils/stage-resources";
 import {
   CommitmentElementContext,
   ElementContentHandlers,
@@ -40,8 +42,11 @@ export function StageElementCard({
   taskListContext,
 }: StageElementCardProps) {
   const style = getElementStyle(element.element_type);
-  const title =
-    element.title?.trim() || ELEMENT_TYPE_LABELS[element.element_type] || "Stage Element";
+  const isResources = element.element_type === "resources";
+  const title = isResources
+    ? element.title?.trim() || "Resources & Templates"
+    : element.title?.trim() || ELEMENT_TYPE_LABELS[element.element_type] || "Stage Element";
+  const resourceCount = isResources ? getResourcesCount(element) : 0;
   const hasToggle = !["live_call", "commitment_builder", "task_list"].includes(
     element.element_type
   );
@@ -62,6 +67,14 @@ export function StageElementCard({
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
                 <h4 className="text-lg font-bold text-slate-800 mb-1">{title}</h4>
+                {isResources ? (
+                  <div className="flex items-center gap-3 text-sm text-slate-500 mb-2">
+                    <span className="flex items-center gap-1">
+                      <i className="fa-solid fa-download text-xs" />
+                      {formatResourceCountLabel(resourceCount)}
+                    </span>
+                  </div>
+                ) : null}
                 {element.is_required ? (
                   <span className="inline-flex items-center px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded-full ring-1 ring-amber-100">
                     Required
@@ -77,6 +90,7 @@ export function StageElementCard({
               "live_call",
               "commitment_builder",
               "task_list",
+              "resources",
               "ai_mentor",
               "reflection_journal",
             ].includes(element.element_type) ? (
@@ -90,6 +104,12 @@ export function StageElementCard({
             ) : null}
             {element.element_type === "task_list" && element.description ? (
               <p className="text-sm text-slate-600 mb-2">{element.description}</p>
+            ) : null}
+            {isResources ? (
+              <p className="text-sm text-slate-600 mb-2">
+                {element.description?.trim() ||
+                  "Download helpful materials to support your work"}
+              </p>
             ) : null}
           </div>
         </div>

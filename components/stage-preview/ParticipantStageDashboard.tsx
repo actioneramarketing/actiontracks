@@ -191,20 +191,12 @@ export function ParticipantStageDashboard({
           </div>
 
           <ParticipantStageSidebar
-            track={track}
             nextActionTitle={nextAction.title}
             nextActionDescription={nextAction.description}
             liveEvents={liveEvents}
             sidebarTasks={sidebarTasks}
             guide={guide}
             commitmentSummary={commitmentSummary}
-            hasAiMentor={Boolean(aiMentorElement)}
-            hasJournal={Boolean(journalElement)}
-            onOpenAiMentor={openAiMentor}
-            onOpenJournal={openJournal}
-            onScrollToElement={scrollToElement}
-            aiMentorElementId={aiMentorElement?.id}
-            journalElementId={journalElement?.id}
           />
         </div>
       </div>

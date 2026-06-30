@@ -1,7 +1,6 @@
 "use client";
 
 import { GuideProfile } from "@/lib/types/database";
-import { NormalizedActionTrack } from "@/lib/utils/normalize-action-track";
 import { resolveProfileImageUrl } from "@/lib/utils/guide-profile-image";
 import {
   LiveCallEventItem,
@@ -11,20 +10,12 @@ import { shadowSoft } from "./shared";
 import { priorityIconClass } from "./element-ux-styles";
 
 interface ParticipantStageSidebarProps {
-  track: NormalizedActionTrack;
   nextActionTitle: string;
   nextActionDescription: string;
   liveEvents: LiveCallEventItem[];
   sidebarTasks: SidebarTaskItem[];
   guide: GuideProfile | null;
   commitmentSummary: string | null;
-  hasAiMentor: boolean;
-  hasJournal: boolean;
-  onOpenAiMentor: () => void;
-  onOpenJournal: () => void;
-  onScrollToElement: (elementId: string) => void;
-  aiMentorElementId?: string;
-  journalElementId?: string;
 }
 
 function formatEventDate(callDate: string, startTime: string): string {
@@ -39,17 +30,12 @@ function formatEventDate(callDate: string, startTime: string): string {
 }
 
 export function ParticipantStageSidebar({
-  track,
   nextActionTitle,
   nextActionDescription,
   liveEvents,
   sidebarTasks,
   guide,
   commitmentSummary,
-  hasAiMentor,
-  hasJournal,
-  onOpenAiMentor,
-  onOpenJournal,
 }: ParticipantStageSidebarProps) {
   const guideImage = guide ? resolveProfileImageUrl(guide) : "";
   const guideName = guide?.full_name?.trim() || "Your Guide";
@@ -68,6 +54,52 @@ export function ParticipantStageSidebar({
 
   return (
     <div className="space-y-6">
+      <section
+        id="guide-panel"
+        className={`bg-white rounded-2xl p-6 ${shadowSoft} border-t-4 border-[#14b8a6]`}
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-4">
+            {guideImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={guideImage}
+                alt={guideName}
+                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-teal-100 border-4 border-white shadow-md flex items-center justify-center text-teal-700 font-bold text-xl">
+                {guideName.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 border-2 border-white rounded-full" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800">{guideName}</h3>
+          <p className="text-xs font-semibold text-[#14b8a6] uppercase tracking-wider mb-3">
+            {guideHeadline}
+          </p>
+          <p className="text-sm text-slate-600 mb-5 line-clamp-3">{guideBio}</p>
+          {guide?.website_url ? (
+            <a
+              href={guide.website_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2 bg-white text-slate-600 font-semibold rounded-lg text-sm hover:bg-slate-50 transition-colors border border-slate-200 text-center"
+            >
+              Profile
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="w-full py-2 bg-white text-slate-400 font-semibold rounded-lg text-sm border border-slate-200 cursor-not-allowed"
+            >
+              Profile
+            </button>
+          )}
+        </div>
+      </section>
+
       <section
         id="commitment-summary"
         className={`bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 ${shadowSoft} text-white relative overflow-hidden`}
@@ -238,34 +270,6 @@ export function ParticipantStageSidebar({
         )}
       </section>
 
-      <section id="track-group-panel" className={`bg-white rounded-2xl ${shadowSoft} overflow-hidden`}>
-        <div className="relative h-24 overflow-hidden bg-gradient-to-br from-[#14b8a6]/20 to-violet-100">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-1 bg-white/20 backdrop-blur-sm text-slate-700 text-xs font-semibold rounded-full">
-            <i className="fa-solid fa-users" /> Track Group
-          </span>
-        </div>
-        <div className="p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div>
-              <p className="text-sm font-bold text-slate-800">{track.title}</p>
-              <p className="text-xs text-slate-500">Community coming soon</p>
-            </div>
-          </div>
-          <p className="text-xs text-slate-500 mb-4">
-            Your accountability group for this track. Share wins, ask questions, and cheer
-            each other on.
-          </p>
-          <button
-            type="button"
-            disabled
-            className="w-full py-2.5 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed text-sm flex items-center justify-center gap-2"
-          >
-            <i className="fa-solid fa-arrow-right-to-bracket" /> Go to Group
-          </button>
-        </div>
-      </section>
-
       <section id="sidebar-partner" className={`bg-white rounded-2xl ${shadowSoft} p-5`}>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
@@ -282,100 +286,6 @@ export function ParticipantStageSidebar({
           <p className="text-xs text-blue-800">
             Having an accountability partner doubles your chances of completion.
           </p>
-        </div>
-      </section>
-
-      {(hasAiMentor || hasJournal) && (
-        <section id="sidebar-tools" className={`bg-white rounded-2xl ${shadowSoft} p-5`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-md font-bold text-slate-800 flex items-center gap-2">
-              <i className="fa-solid fa-toolbox text-indigo-500" /> Tools
-            </h3>
-            <span className="text-xs text-slate-400 font-medium">
-              {(hasAiMentor ? 1 : 0) + (hasJournal ? 1 : 0)} tool
-              {(hasAiMentor ? 1 : 0) + (hasJournal ? 1 : 0) === 1 ? "" : "s"}
-            </span>
-          </div>
-          <div className="space-y-3">
-            {hasAiMentor ? (
-              <button
-                type="button"
-                onClick={onOpenAiMentor}
-                className="w-full flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl hover:border-indigo-300 hover:bg-indigo-100 transition-colors group"
-              >
-                <div className="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-robot text-sm" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-bold text-slate-800">AI Mentor</p>
-                  <p className="text-xs text-slate-500">Instant guidance 24/7</p>
-                </div>
-                <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-indigo-600 text-xs" />
-              </button>
-            ) : null}
-            {hasJournal ? (
-              <button
-                type="button"
-                onClick={onOpenJournal}
-                className="w-full flex items-center gap-3 p-3 bg-pink-50 border border-pink-100 rounded-xl hover:border-pink-300 hover:bg-pink-100 transition-colors group"
-              >
-                <div className="w-9 h-9 rounded-lg bg-pink-600 text-white flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-book text-sm" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-bold text-slate-800">Reflection Journal</p>
-                  <p className="text-xs text-slate-500">Document your journey</p>
-                </div>
-                <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-pink-600 text-xs" />
-              </button>
-            ) : null}
-          </div>
-        </section>
-      )}
-
-      <section
-        id="guide-panel"
-        className={`bg-white rounded-2xl p-6 ${shadowSoft} border-t-4 border-[#14b8a6] sticky top-24`}
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="relative mb-4">
-            {guideImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={guideImage}
-                alt={guideName}
-                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-teal-100 border-4 border-white shadow-md flex items-center justify-center text-teal-700 font-bold text-xl">
-                {guideName.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 border-2 border-white rounded-full" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-800">{guideName}</h3>
-          <p className="text-xs font-semibold text-[#14b8a6] uppercase tracking-wider mb-3">
-            {guideHeadline}
-          </p>
-          <p className="text-sm text-slate-600 mb-5 line-clamp-3">{guideBio}</p>
-          {guide?.website_url ? (
-            <a
-              href={guide.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-2 bg-white text-slate-600 font-semibold rounded-lg text-sm hover:bg-slate-50 transition-colors border border-slate-200 text-center"
-            >
-              Profile
-            </a>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="w-full py-2 bg-white text-slate-400 font-semibold rounded-lg text-sm border border-slate-200 cursor-not-allowed"
-            >
-              Profile
-            </button>
-          )}
         </div>
       </section>
     </div>

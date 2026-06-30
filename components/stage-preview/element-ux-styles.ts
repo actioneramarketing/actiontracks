@@ -100,9 +100,22 @@ export function resourceIconClass(type: string): string {
     case "doc":
     case "docx":
     case "word":
+    case "document":
       return "fa-regular fa-file-word text-blue-500";
+    case "video":
+      return "fa-solid fa-play text-red-500";
+    case "audio":
+      return "fa-solid fa-volume-high text-purple-500";
+    case "image":
+      return "fa-regular fa-image text-indigo-500";
     case "link":
+    case "url":
+    case "website":
+    case "external_tool":
       return "fa-solid fa-link text-[#14b8a6]";
+    case "worksheet":
+    case "template":
+      return "fa-regular fa-file-lines text-blue-500";
     default:
       return "fa-regular fa-file text-slate-500";
   }

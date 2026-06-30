@@ -5,13 +5,12 @@ import { ELEMENT_TYPE_LABELS } from "@/lib/constants/element-types";
 import { StageElement } from "@/lib/types/database";
 import {
   asRecord,
-  asResourceArray,
   asString,
   asStringArray,
   getReflectionJournalPrompts,
 } from "@/lib/utils/element-settings";
-import { resourceIconClass } from "./element-ux-styles";
 import { CommitmentBuilderElement } from "./elements/CommitmentBuilderElement";
+import { ResourcesElement } from "./elements/ResourcesElement";
 import { TaskListElement } from "./elements/TaskListElement";
 import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
 import type { ParticipantTaskRowView } from "@/lib/utils/participant-tasks";
@@ -110,7 +109,7 @@ export function StageElementContent({
         />
       );
     case "resources":
-      return <ResourcesElementContent settings={settings} />;
+      return <ResourcesElement element={element} />;
     case "completion_submission":
       return <CompletionSubmissionElementContent settings={settings} element={element} />;
     case "reward_activation":
@@ -282,71 +281,6 @@ function ReflectionJournalElementContent({
       >
         <i className="fa-solid fa-pen-to-square" /> Open Full Journal
       </button>
-    </div>
-  );
-}
-
-function ResourcesElementContent({ settings }: { settings: Record<string, unknown> }) {
-  const resources = asResourceArray(settings.resources, 10).filter(
-    (r) => r.title || r.url
-  );
-
-  if (resources.length === 0) {
-    return (
-      <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
-        No resources configured yet.
-      </div>
-    );
-  }
-
-  return (
-    <div className="px-6 pb-6 border-t border-slate-100 pt-4">
-      <div className="space-y-2">
-        {resources.map((resource, index) => {
-          const inner = (
-            <>
-              <div className="flex items-center gap-3">
-                <i className={`${resourceIconClass(resource.type)} text-xl`} />
-                <div>
-                  <p className="font-semibold text-slate-800 text-sm">
-                    {resource.title || "Resource"}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {resource.description ||
-                      `${resource.type.replace("_", " ")}${resource.url ? "" : ""}`}
-                  </p>
-                </div>
-              </div>
-              <i
-                className={`fa-solid ${resource.url ? "fa-download" : "fa-link"} text-slate-400 group-hover:text-amber-600`}
-              />
-            </>
-          );
-
-          if (resource.url) {
-            return (
-              <a
-                key={index}
-                href={resource.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50 transition-colors group"
-              >
-                {inner}
-              </a>
-            );
-          }
-
-          return (
-            <div
-              key={index}
-              className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200"
-            >
-              {inner}
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
