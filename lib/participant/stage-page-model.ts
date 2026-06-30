@@ -114,6 +114,20 @@ export function getStageNavigation(
   };
 }
 
+export function getStageTagline(
+  stage: ActionTrackStage,
+  track: NormalizedActionTrack
+): string {
+  return (
+    stage.subtitle?.trim() ||
+    stage.stage_summary?.trim() ||
+    stage.stage_goal?.trim() ||
+    stage.what_youll_accomplish?.trim() ||
+    track.short_description?.trim() ||
+    ""
+  );
+}
+
 export function getStageAccomplishmentText(
   stage: ActionTrackStage,
   track: NormalizedActionTrack

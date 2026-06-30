@@ -9,9 +9,8 @@ interface ParticipantStageHeaderProps {
   stage: ActionTrackStage;
   stages: ActionTrackStage[];
   totalStages: number;
-  unlockSubtitle: string;
+  stageTagline: string;
   accomplishmentText: string;
-  startHereBody: string;
   actionCount: number;
 }
 
@@ -20,9 +19,8 @@ export function ParticipantStageHeader({
   stage,
   stages,
   totalStages,
-  unlockSubtitle,
+  stageTagline,
   accomplishmentText,
-  startHereBody,
   actionCount,
 }: ParticipantStageHeaderProps) {
   return (
@@ -31,7 +29,9 @@ export function ParticipantStageHeader({
         <h1 className="text-2xl font-bold text-slate-800">
           Stage {stage.stage_number}: {stage.title}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">{unlockSubtitle}</p>
+        {stageTagline ? (
+          <p className="text-sm text-slate-500 mt-1">{stageTagline}</p>
+        ) : null}
       </div>
 
       <ParticipantStageNavigation
@@ -77,22 +77,6 @@ export function ParticipantStageHeader({
               Complete all actions to unlock
             </p>
           </div>
-        </div>
-      </section>
-
-      <section
-        id="start-here-card"
-        className={`bg-gradient-to-br from-[#14b8a6] to-[#0d9488] rounded-2xl p-8 ${shadowSoft} text-white relative overflow-hidden min-h-[13rem]`}
-      >
-        <div className="absolute -right-12 -top-12 text-white/10">
-          <i className="fa-solid fa-rocket text-[160px]" />
-        </div>
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-xs font-semibold mb-4">
-            <i className="fa-solid fa-star" /> START HERE
-          </div>
-          <h2 className="text-3xl font-bold mb-3">Welcome to Stage {stage.stage_number}</h2>
-          <p className="text-[#f0fdfa] text-lg mb-6 max-w-2xl">{startHereBody}</p>
         </div>
       </section>
     </>

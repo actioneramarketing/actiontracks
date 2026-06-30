@@ -9,8 +9,7 @@ import {
   getJournalElement,
   getNextActionCopy,
   getStageAccomplishmentText,
-  getStartHereBody,
-  getUnlockSubtitle,
+  getStageTagline,
   getVisibleStageElements,
 } from "@/lib/participant/stage-page-model";
 import { buildSidebarPendingTasks } from "@/lib/utils/participant-tasks";
@@ -91,8 +90,7 @@ export function ParticipantStageDashboard({
   const journalElement = useMemo(() => getJournalElement(visibleElements), [visibleElements]);
 
   const accomplishmentText = getStageAccomplishmentText(stage, track);
-  const startHereBody = getStartHereBody(stage);
-  const unlockSubtitle = getUnlockSubtitle(stage, stages);
+  const stageTagline = getStageTagline(stage, track);
   const nextAction = getNextActionCopy(stage, visibleElements);
   const liveEvents = collectLiveCallEvents(stages, trackElements);
   const sidebarTasks = buildSidebarPendingTasks(visibleElements, participantTasks);
@@ -147,9 +145,8 @@ export function ParticipantStageDashboard({
           stage={stage}
           stages={stages}
           totalStages={stages.length}
-          unlockSubtitle={unlockSubtitle}
+          stageTagline={stageTagline}
           accomplishmentText={accomplishmentText}
-          startHereBody={startHereBody}
           actionCount={visibleElements.length}
         />
 
