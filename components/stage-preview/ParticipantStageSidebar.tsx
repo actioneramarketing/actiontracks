@@ -10,6 +10,7 @@ import {
 import { JournalEntryReviewItem } from "@/lib/utils/journal-entries";
 import { JournalEntriesReviewModal } from "./JournalEntriesReviewModal";
 import { JournalEntriesSidebarCard } from "./JournalEntriesSidebarCard";
+import { GuideProfileModal } from "./GuideProfileModal";
 import { shadowSoft } from "./shared";
 import { priorityIconClass } from "./element-ux-styles";
 
@@ -44,16 +45,17 @@ export function ParticipantStageSidebar({
   journalReviewEntries,
 }: ParticipantStageSidebarProps) {
   const [journalReviewOpen, setJournalReviewOpen] = useState(false);
+  const [guideProfileOpen, setGuideProfileOpen] = useState(false);
 
   useEffect(() => {
-    if (journalReviewOpen) {
+    if (journalReviewOpen || guideProfileOpen) {
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = "";
       };
     }
     document.body.style.overflow = "";
-  }, [journalReviewOpen]);
+  }, [journalReviewOpen, guideProfileOpen]);
 
   const guideImage = guide ? resolveProfileImageUrl(guide) : "";
   const guideName = guide?.full_name?.trim() || "Your Guide";
@@ -97,24 +99,13 @@ export function ParticipantStageSidebar({
             {guideHeadline}
           </p>
           <p className="text-sm text-slate-600 mb-5 line-clamp-3">{guideBio}</p>
-          {guide?.website_url ? (
-            <a
-              href={guide.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-2 bg-white text-slate-600 font-semibold rounded-lg text-sm hover:bg-slate-50 transition-colors border border-slate-200 text-center"
-            >
-              Profile
-            </a>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="w-full py-2 bg-white text-slate-400 font-semibold rounded-lg text-sm border border-slate-200 cursor-not-allowed"
-            >
-              Profile
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setGuideProfileOpen(true)}
+            className="w-full py-2 bg-white text-slate-600 font-semibold rounded-lg text-sm hover:bg-slate-50 transition-colors border border-slate-200"
+          >
+            Profile
+          </button>
         </div>
       </section>
 
@@ -317,6 +308,10 @@ export function ParticipantStageSidebar({
           entries={journalReviewEntries}
           onClose={() => setJournalReviewOpen(false)}
         />
+      ) : null}
+
+      {guideProfileOpen ? (
+        <GuideProfileModal guide={guide} onClose={() => setGuideProfileOpen(false)} />
       ) : null}
     </div>
   );
