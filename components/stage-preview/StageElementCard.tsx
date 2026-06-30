@@ -16,9 +16,11 @@ import { formatResourceCountLabel } from "@/lib/utils/stage-resources";
 import {
   CommitmentElementContext,
   ElementContentHandlers,
+  JournalElementContext,
   StageElementContent,
   TaskListElementContext,
 } from "./StageElementContent";
+import { getReflectionJournalStatusLabel } from "./elements/ReflectionJournalElement";
 
 interface StageElementCardProps {
   element: StageElement;
@@ -27,6 +29,7 @@ interface StageElementCardProps {
   handlers?: ElementContentHandlers;
   commitmentContext?: CommitmentElementContext;
   taskListContext?: TaskListElementContext;
+  journalContext?: JournalElementContext;
 }
 
 function getElementStyle(type: StageElementType) {
@@ -40,9 +43,11 @@ export function StageElementCard({
   handlers,
   commitmentContext,
   taskListContext,
+  journalContext,
 }: StageElementCardProps) {
   const style = getElementStyle(element.element_type);
   const isResources = element.element_type === "resources";
+  const isJournal = element.element_type === "reflection_journal";
   const title = isResources
     ? element.title?.trim() || "Resources & Templates"
     : element.title?.trim() || ELEMENT_TYPE_LABELS[element.element_type] || "Stage Element";
@@ -72,6 +77,25 @@ export function StageElementCard({
                     <span className="flex items-center gap-1">
                       <i className="fa-solid fa-download text-xs" />
                       {formatResourceCountLabel(resourceCount)}
+                    </span>
+                  </div>
+                ) : null}
+                {isJournal && journalContext ? (
+                  <div className="flex items-center gap-3 text-sm text-slate-500 mb-2">
+                    <span className="flex items-center gap-1">
+                      {getReflectionJournalStatusLabel(
+                        element.id,
+                        journalContext.savedEntries
+                      ) === "Saved" ? (
+                        <>
+                          <i className="fa-solid fa-circle-check text-[10px] text-pink-600" />{" "}
+                          Saved
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-regular fa-circle text-[8px]" /> Not Started
+                        </>
+                      )}
                     </span>
                   </div>
                 ) : null}
@@ -120,6 +144,7 @@ export function StageElementCard({
           handlers={handlers}
           commitmentContext={commitmentContext}
           taskListContext={taskListContext}
+          journalContext={journalContext}
         />
       </CollapsiblePanel>
     </section>

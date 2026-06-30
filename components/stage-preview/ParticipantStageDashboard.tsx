@@ -24,6 +24,7 @@ import {
 import { ParticipantStageSidebar } from "./ParticipantStageSidebar";
 import { StageElementCard } from "./StageElementCard";
 import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
+import type { ParticipantJournalEntryView } from "@/lib/utils/journal-entries";
 import "./stage-dashboard-preview.css";
 
 export interface ParticipantStageDashboardProps {
@@ -38,6 +39,7 @@ export interface ParticipantStageDashboardProps {
   commitments: ParticipantCommitmentView[];
   commitmentSummary: string | null;
   participantTasks: ParticipantTaskRowView[];
+  journalEntries: ParticipantJournalEntryView[];
 }
 
 export function ParticipantStageDashboard({
@@ -52,6 +54,7 @@ export function ParticipantStageDashboard({
   commitments,
   commitmentSummary,
   participantTasks,
+  journalEntries,
 }: ParticipantStageDashboardProps) {
   const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
 
@@ -179,6 +182,11 @@ export function ParticipantStageDashboard({
                             }
                           : undefined
                       }
+                      journalContext={
+                        element.element_type === "reflection_journal"
+                          ? { savedEntries: journalEntries }
+                          : undefined
+                      }
                     />
                   ))}
                 </>
@@ -203,7 +211,17 @@ export function ParticipantStageDashboard({
         </div>
       </div>
 
-      <ParticipantStageModals modal={modal} onClose={() => setModal(null)} />
+      <ParticipantStageModals
+        modal={modal}
+        journalContext={{
+          trackId: track.id,
+          stageId: stage.id,
+          trackSlug,
+          stageSlug,
+          savedEntries: journalEntries,
+        }}
+        onClose={() => setModal(null)}
+      />
     </div>
   );
 }

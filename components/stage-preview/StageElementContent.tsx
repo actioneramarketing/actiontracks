@@ -10,9 +10,11 @@ import {
   getReflectionJournalPrompts,
 } from "@/lib/utils/element-settings";
 import { CommitmentBuilderElement } from "./elements/CommitmentBuilderElement";
+import { ReflectionJournalElement } from "./elements/ReflectionJournalElement";
 import { ResourcesElement } from "./elements/ResourcesElement";
 import { TaskListElement } from "./elements/TaskListElement";
 import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
+import type { ParticipantJournalEntryView } from "@/lib/utils/journal-entries";
 import type { ParticipantTaskRowView } from "@/lib/utils/participant-tasks";
 
 export interface ElementContentHandlers {
@@ -36,16 +38,22 @@ export interface TaskListElementContext {
   savedTasks: ParticipantTaskRowView[];
 }
 
+export interface JournalElementContext {
+  savedEntries: ParticipantJournalEntryView[];
+}
+
 export function StageElementContent({
   element,
   handlers = {},
   commitmentContext,
   taskListContext,
+  journalContext,
 }: {
   element: StageElement;
   handlers?: ElementContentHandlers;
   commitmentContext?: CommitmentElementContext;
   taskListContext?: TaskListElementContext;
+  journalContext?: JournalElementContext;
 }) {
   const settings = asRecord(element.settings_json);
 
@@ -101,9 +109,15 @@ export function StageElementContent({
         />
       );
     case "reflection_journal":
+      if (!journalContext) {
+        return (
+          <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
+            Reflection Journal is unavailable.
+          </div>
+        );
+      }
       return (
-        <ReflectionJournalElementContent
-          settings={settings}
+        <ReflectionJournalElement
           element={element}
           onOpen={() => handlers.onOpenJournal?.(element)}
         />
@@ -244,43 +258,6 @@ function AiMentorElementContent({
       {!embedCode.trim() ? (
         <p className="text-xs text-slate-500 mt-3">AI Mentor embed coming soon.</p>
       ) : null}
-    </div>
-  );
-}
-
-function ReflectionJournalElementContent({
-  settings,
-  element,
-  onOpen,
-}: {
-  settings: Record<string, unknown>;
-  element: StageElement;
-  onOpen: () => void;
-}) {
-  const prompts = getReflectionJournalPrompts(settings);
-  const time = asString(settings.estimated_time);
-
-  return (
-    <div className="px-6 pb-6 border-t border-slate-100 pt-4">
-      <div className="bg-pink-50 rounded-xl p-4 mb-4 border border-pink-100">
-        <p className="text-sm font-semibold text-pink-900 mb-2">Today&apos;s Prompt:</p>
-        <p className="text-sm text-pink-800 italic">&quot;{prompts[0]}&quot;</p>
-      </div>
-      {time ? (
-        <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
-          <i className="fa-regular fa-clock" /> {time}
-        </p>
-      ) : null}
-      {element.description ? (
-        <p className="text-sm text-slate-600 mb-4">{element.description}</p>
-      ) : null}
-      <button
-        type="button"
-        onClick={onOpen}
-        className="w-full sm:w-auto px-6 py-3 bg-pink-600 text-white font-semibold rounded-xl hover:bg-pink-700 transition-colors flex items-center justify-center gap-2"
-      >
-        <i className="fa-solid fa-pen-to-square" /> Open Full Journal
-      </button>
     </div>
   );
 }

@@ -4,6 +4,9 @@ import {
 } from "@/lib/actions/commitments";
 import { getParticipantKeyFromCookies } from "@/lib/participant/get-participant-key";
 import {
+  getJournalEntriesForStage,
+} from "@/lib/actions/journal-entries";
+import {
   getParticipantTasksForStage,
 } from "@/lib/actions/participant-tasks";
 import { getEnabledElementsForTrack, getElementsForStage } from "@/lib/actions/stage-elements";
@@ -53,15 +56,26 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     .filter((el) => el.element_type === "commitment_builder")
     .map((el) => el.id);
 
+  const journalElementIds = enabledElements
+    .filter((el) => el.element_type === "reflection_journal")
+    .map((el) => el.id);
+
   const participantKey = await getParticipantKeyFromCookies();
-  const [{ commitments }, { tasks: participantTasks }] = await Promise.all([
-    getCommitmentsForStage(
-      stage.id,
-      participantKey,
-      commitmentElementIds.length > 0 ? commitmentElementIds : undefined
-    ),
-    getParticipantTasksForStage(track.id, stage.id, participantKey),
-  ]);
+  const [{ commitments }, { tasks: participantTasks }, { entries: journalEntries }] =
+    await Promise.all([
+      getCommitmentsForStage(
+        stage.id,
+        participantKey,
+        commitmentElementIds.length > 0 ? commitmentElementIds : undefined
+      ),
+      getParticipantTasksForStage(track.id, stage.id, participantKey),
+      getJournalEntriesForStage(
+        track.id,
+        stage.id,
+        participantKey,
+        journalElementIds.length > 0 ? journalElementIds : undefined
+      ),
+    ]);
 
   const commitmentSummary = getStageCommitmentSummary(commitments);
 
@@ -79,6 +93,9 @@ export default async function ParticipantStagePage({ params }: PageProps) {
       commitmentSummary={commitmentSummary}
       participantTasks={
         JSON.parse(JSON.stringify(participantTasks)) as typeof participantTasks
+      }
+      journalEntries={
+        JSON.parse(JSON.stringify(journalEntries)) as typeof journalEntries
       }
     />
   );
