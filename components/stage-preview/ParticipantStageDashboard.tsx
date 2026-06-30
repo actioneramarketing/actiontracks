@@ -24,7 +24,11 @@ import {
 import { ParticipantStageSidebar } from "./ParticipantStageSidebar";
 import { StageElementCard } from "./StageElementCard";
 import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
-import type { ParticipantJournalEntryView } from "@/lib/utils/journal-entries";
+import {
+  buildJournalReviewItems,
+  type JournalEntryReviewItem,
+  type ParticipantJournalEntryView,
+} from "@/lib/utils/journal-entries";
 import "./stage-dashboard-preview.css";
 
 export interface ParticipantStageDashboardProps {
@@ -39,7 +43,7 @@ export interface ParticipantStageDashboardProps {
   commitments: ParticipantCommitmentView[];
   commitmentSummary: string | null;
   participantTasks: ParticipantTaskRowView[];
-  journalEntries: ParticipantJournalEntryView[];
+  trackJournalEntries: ParticipantJournalEntryView[];
 }
 
 export function ParticipantStageDashboard({
@@ -54,9 +58,20 @@ export function ParticipantStageDashboard({
   commitments,
   commitmentSummary,
   participantTasks,
-  journalEntries,
+  trackJournalEntries,
 }: ParticipantStageDashboardProps) {
   const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
+
+  const journalEntries = useMemo(
+    () => trackJournalEntries.filter((entry) => entry.stageId === stage.id),
+    [trackJournalEntries, stage.id]
+  );
+
+  const journalReviewEntries = useMemo(
+    (): JournalEntryReviewItem[] =>
+      buildJournalReviewItems(trackJournalEntries, stages, trackElements),
+    [trackJournalEntries, stages, trackElements]
+  );
 
   const commitmentByElementId = useMemo(
     () => Object.fromEntries(commitments.map((item) => [item.elementId, item])),
@@ -207,6 +222,7 @@ export function ParticipantStageDashboard({
             sidebarTasks={sidebarTasks}
             guide={guide}
             commitmentSummary={commitmentSummary}
+            journalReviewEntries={journalReviewEntries}
           />
         </div>
       </div>

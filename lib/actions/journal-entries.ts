@@ -146,6 +146,44 @@ export async function getJournalEntriesForStage(
   }
 }
 
+export async function getJournalEntriesForTrack(
+  trackId: string,
+  participantKey: string | null
+): Promise<{ entries: ParticipantJournalEntryView[]; error?: string }> {
+  if (!participantKey) {
+    return { entries: [] };
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("action_track_journal_entries")
+      .select("*")
+      .eq("track_id", trackId)
+      .eq("participant_key", participantKey)
+      .order("updated_at", { ascending: true });
+
+    if (error) {
+      logJournalActionError("getJournalEntriesForTrack", { trackId }, error);
+      return { entries: [], error: "Failed to load journal entries." };
+    }
+
+    const rows = (data ?? []) as ActionTrackJournalEntry[];
+    return { entries: rows.map(mapJournalEntryRow) };
+  } catch (error) {
+    console.error("[getJournalEntriesForTrack] Unexpected error", {
+      action: "getJournalEntriesForTrack",
+      trackId,
+      error,
+    });
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : "Failed to load journal entries.";
+    return { entries: [], error: message };
+  }
+}
+
 export async function saveJournalEntries(
   formData: FormData
 ): Promise<{ error?: string; success?: boolean }> {

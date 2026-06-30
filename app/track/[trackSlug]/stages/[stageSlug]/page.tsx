@@ -4,7 +4,7 @@ import {
 } from "@/lib/actions/commitments";
 import { getParticipantKeyFromCookies } from "@/lib/participant/get-participant-key";
 import {
-  getJournalEntriesForStage,
+  getJournalEntriesForTrack,
 } from "@/lib/actions/journal-entries";
 import {
   getParticipantTasksForStage,
@@ -56,12 +56,8 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     .filter((el) => el.element_type === "commitment_builder")
     .map((el) => el.id);
 
-  const journalElementIds = enabledElements
-    .filter((el) => el.element_type === "reflection_journal")
-    .map((el) => el.id);
-
   const participantKey = await getParticipantKeyFromCookies();
-  const [{ commitments }, { tasks: participantTasks }, { entries: journalEntries }] =
+  const [{ commitments }, { tasks: participantTasks }, { entries: trackJournalEntries }] =
     await Promise.all([
       getCommitmentsForStage(
         stage.id,
@@ -69,12 +65,7 @@ export default async function ParticipantStagePage({ params }: PageProps) {
         commitmentElementIds.length > 0 ? commitmentElementIds : undefined
       ),
       getParticipantTasksForStage(track.id, stage.id, participantKey),
-      getJournalEntriesForStage(
-        track.id,
-        stage.id,
-        participantKey,
-        journalElementIds.length > 0 ? journalElementIds : undefined
-      ),
+      getJournalEntriesForTrack(track.id, participantKey),
     ]);
 
   const commitmentSummary = getStageCommitmentSummary(commitments);
@@ -94,8 +85,8 @@ export default async function ParticipantStagePage({ params }: PageProps) {
       participantTasks={
         JSON.parse(JSON.stringify(participantTasks)) as typeof participantTasks
       }
-      journalEntries={
-        JSON.parse(JSON.stringify(journalEntries)) as typeof journalEntries
+      trackJournalEntries={
+        JSON.parse(JSON.stringify(trackJournalEntries)) as typeof trackJournalEntries
       }
     />
   );

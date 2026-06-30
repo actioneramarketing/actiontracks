@@ -1,11 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { GuideProfile } from "@/lib/types/database";
 import { resolveProfileImageUrl } from "@/lib/utils/guide-profile-image";
 import {
   LiveCallEventItem,
   SidebarTaskItem,
 } from "@/lib/participant/stage-page-model";
+import { JournalEntryReviewItem } from "@/lib/utils/journal-entries";
+import { JournalEntriesReviewModal } from "./JournalEntriesReviewModal";
+import { JournalEntriesSidebarCard } from "./JournalEntriesSidebarCard";
 import { shadowSoft } from "./shared";
 import { priorityIconClass } from "./element-ux-styles";
 
@@ -16,6 +20,7 @@ interface ParticipantStageSidebarProps {
   sidebarTasks: SidebarTaskItem[];
   guide: GuideProfile | null;
   commitmentSummary: string | null;
+  journalReviewEntries: JournalEntryReviewItem[];
 }
 
 function formatEventDate(callDate: string, startTime: string): string {
@@ -36,7 +41,20 @@ export function ParticipantStageSidebar({
   sidebarTasks,
   guide,
   commitmentSummary,
+  journalReviewEntries,
 }: ParticipantStageSidebarProps) {
+  const [journalReviewOpen, setJournalReviewOpen] = useState(false);
+
+  useEffect(() => {
+    if (journalReviewOpen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+    document.body.style.overflow = "";
+  }, [journalReviewOpen]);
+
   const guideImage = guide ? resolveProfileImageUrl(guide) : "";
   const guideName = guide?.full_name?.trim() || "Your Guide";
   const guideHeadline = guide?.profile_headline?.trim() || "Your Track Guide";
@@ -121,6 +139,11 @@ export function ParticipantStageSidebar({
           </div>
         </div>
       </section>
+
+      <JournalEntriesSidebarCard
+        entryCount={journalReviewEntries.length}
+        onOpen={() => setJournalReviewOpen(true)}
+      />
 
       <section
         id="next-action"
@@ -288,6 +311,13 @@ export function ParticipantStageSidebar({
           </p>
         </div>
       </section>
+
+      {journalReviewOpen ? (
+        <JournalEntriesReviewModal
+          entries={journalReviewEntries}
+          onClose={() => setJournalReviewOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

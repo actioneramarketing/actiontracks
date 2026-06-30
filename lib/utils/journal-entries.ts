@@ -11,6 +11,7 @@ export interface JournalPromptDefinition {
 
 export interface ParticipantJournalEntryView {
   id: string;
+  stageId: string;
   elementId: string;
   promptKey: string;
   promptText: string;
@@ -81,8 +82,23 @@ export function parseJournalPrompts(
   ];
 }
 
+import { ActionTrackStage, StageElement } from "@/lib/types/database";
+
+export interface JournalEntryReviewItem {
+  id: string;
+  stageId: string;
+  stageNumber: number;
+  stageTitle: string;
+  elementId: string;
+  elementTitle: string | null;
+  promptText: string;
+  entryText: string;
+  updatedAt: string;
+}
+
 export function mapJournalEntryRow(raw: {
   id: string;
+  stage_id: string;
   element_id: string;
   prompt_key: string;
   prompt_text: string;
@@ -91,6 +107,7 @@ export function mapJournalEntryRow(raw: {
 }): ParticipantJournalEntryView {
   return {
     id: raw.id,
+    stageId: raw.stage_id,
     elementId: raw.element_id,
     promptKey: raw.prompt_key,
     promptText: raw.prompt_text,
@@ -137,4 +154,54 @@ export function getJournalEntriesUpdatedAt(
     .map((entry) => entry.updatedAt)
     .sort()
     .join("-");
+}
+
+export function buildJournalReviewItems(
+  entries: ParticipantJournalEntryView[],
+  stages: ActionTrackStage[],
+  trackElements: StageElement[] = []
+): JournalEntryReviewItem[] {
+  const stageById = new Map(stages.map((stage) => [stage.id, stage]));
+  const elementById = new Map(trackElements.map((element) => [element.id, element]));
+
+  const items = entries.map((entry) => {
+    const stage = stageById.get(entry.stageId);
+    const element = elementById.get(entry.elementId);
+
+    return {
+      id: entry.id,
+      stageId: entry.stageId,
+      stageNumber: stage?.stage_number ?? 0,
+      stageTitle: stage?.title?.trim() || "Stage",
+      elementId: entry.elementId,
+      elementTitle: element?.title?.trim() || null,
+      promptText: entry.promptText,
+      entryText: entry.entryText,
+      updatedAt: entry.updatedAt,
+    };
+  });
+
+  return items.sort((a, b) => {
+    if (a.stageNumber !== b.stageNumber) {
+      return a.stageNumber - b.stageNumber;
+    }
+    return a.updatedAt.localeCompare(b.updatedAt);
+  });
+}
+
+export function formatJournalUpdatedAt(value: string): string | null {
+  if (!value.trim()) {
+    return null;
+  }
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+  return new Date(parsed).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
