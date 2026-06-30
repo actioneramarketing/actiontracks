@@ -72,6 +72,42 @@ export async function getElementsForStage(stageId: string): Promise<{
   }
 }
 
+export async function getEnabledElementsForTrack(trackId: string): Promise<{
+  elements: StageElement[];
+  error?: string;
+}> {
+  try {
+    const supabase = tryCreateAdminClient();
+    if (!supabase) {
+      return {
+        elements: [],
+        error:
+          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("stage_elements")
+      .select("*")
+      .eq("track_id", trackId)
+      .eq("is_enabled", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      return { elements: [], error: error.message };
+    }
+
+    return { elements: (data ?? []) as StageElement[] };
+  } catch (error) {
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : "Failed to load track elements.";
+    return { elements: [], error: message };
+  }
+}
+
 export async function createStageElement(
   stageId: string,
   trackId: string,

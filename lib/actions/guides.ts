@@ -71,6 +71,32 @@ export async function getGuideByUserId(
   return normalizeGuideProfile(data);
 }
 
+export async function getGuideById(
+  guideId: string
+): Promise<GuideProfile | null> {
+  const supabase = tryCreateAdminClient();
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("action_track_guides")
+    .select("*")
+    .eq("id", guideId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[getGuideById] Supabase query failed", {
+      guideId,
+      message: error.message,
+      code: error.code,
+    });
+    return null;
+  }
+
+  return normalizeGuideProfile(data);
+}
+
 export async function getGuideByEmail(
   email: string
 ): Promise<GuideProfile | null> {

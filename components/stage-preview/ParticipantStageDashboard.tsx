@@ -1,0 +1,175 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActionTrackStage, GuideProfile, StageElement } from "@/lib/types/database";
+import { NormalizedActionTrack } from "@/lib/utils/normalize-action-track";
+import {
+  collectLiveCallEvents,
+  collectSidebarTasks,
+  getAiMentorElement,
+  getJournalElement,
+  getNextActionCopy,
+  getStageAccomplishmentText,
+  getStartHereBody,
+  getUnlockSubtitle,
+  getVisibleStageElements,
+} from "@/lib/participant/stage-page-model";
+import { ParticipantStageFeedPlaceholder } from "./ParticipantStageFeedPlaceholder";
+import { ParticipantStageHeader } from "./ParticipantStageHeader";
+import {
+  ParticipantModalType,
+  ParticipantStageModals,
+} from "./ParticipantStageModals";
+import { ParticipantStageSidebar } from "./ParticipantStageSidebar";
+import { StageElementCard } from "./StageElementCard";
+import "./stage-dashboard-preview.css";
+
+export interface ParticipantStageDashboardProps {
+  track: NormalizedActionTrack;
+  stage: ActionTrackStage;
+  stages: ActionTrackStage[];
+  elements: StageElement[];
+  trackElements: StageElement[];
+  guide: GuideProfile | null;
+}
+
+export function ParticipantStageDashboard({
+  track,
+  stage,
+  stages,
+  elements,
+  trackElements,
+  guide,
+}: ParticipantStageDashboardProps) {
+  const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
+
+  const [expandedById, setExpandedById] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(visibleElements.map((el) => [el.id, true]))
+  );
+
+  const [modal, setModal] = useState<{
+    type: ParticipantModalType;
+    element: StageElement;
+  } | null>(null);
+
+  const aiMentorElement = useMemo(() => getAiMentorElement(visibleElements), [visibleElements]);
+  const journalElement = useMemo(() => getJournalElement(visibleElements), [visibleElements]);
+
+  const accomplishmentText = getStageAccomplishmentText(stage, track);
+  const startHereBody = getStartHereBody(stage);
+  const unlockSubtitle = getUnlockSubtitle(stage, stages);
+  const nextAction = getNextActionCopy(stage, visibleElements);
+  const liveEvents = collectLiveCallEvents(stages, trackElements);
+  const sidebarTasks = collectSidebarTasks(visibleElements);
+
+  useEffect(() => {
+    if (modal) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+    document.body.style.overflow = "";
+  }, [modal]);
+
+  const toggleElement = useCallback((id: string) => {
+    setExpandedById((current) => ({ ...current, [id]: !current[id] }));
+  }, []);
+
+  const scrollToElement = useCallback((elementId: string) => {
+    document.getElementById(`element-${elementId}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, []);
+
+  const openAiMentor = useCallback(() => {
+    if (aiMentorElement) {
+      scrollToElement(aiMentorElement.id);
+      setModal({ type: "ai-mentor", element: aiMentorElement });
+    }
+  }, [aiMentorElement, scrollToElement]);
+
+  const openJournal = useCallback(() => {
+    if (journalElement) {
+      scrollToElement(journalElement.id);
+      setModal({ type: "journal", element: journalElement });
+    }
+  }, [journalElement, scrollToElement]);
+
+  const elementHandlers = {
+    onOpenAiMentor: (element: StageElement) =>
+      setModal({ type: "ai-mentor", element }),
+    onOpenJournal: (element: StageElement) =>
+      setModal({ type: "journal", element }),
+  };
+
+  return (
+    <div className="stage-dashboard-preview w-full text-slate-800 overflow-x-hidden bg-[#f1f5f9] font-[family-name:var(--font-inter,'Inter',ui-sans-serif,system-ui,sans-serif)]">
+      <div className="p-4 sm:p-8 w-full max-w-6xl mx-auto space-y-8">
+        <ParticipantStageHeader
+          stage={stage}
+          totalStages={stages.length}
+          unlockSubtitle={unlockSubtitle}
+          accomplishmentText={accomplishmentText}
+          startHereBody={startHereBody}
+          actionCount={visibleElements.length}
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="space-y-6">
+              {visibleElements.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                      <i className="fa-solid fa-arrow-right text-[#14b8a6]" /> Your Next
+                      Steps
+                    </h3>
+                    <span className="text-sm text-slate-500 font-medium">
+                      {visibleElements.length} action
+                      {visibleElements.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  {visibleElements.map((element) => (
+                    <StageElementCard
+                      key={element.id}
+                      element={element}
+                      expanded={expandedById[element.id] ?? true}
+                      onToggle={() => toggleElement(element.id)}
+                      handlers={elementHandlers}
+                    />
+                  ))}
+                </>
+              ) : (
+                <div className="bg-white rounded-2xl p-8 text-center text-slate-500 border border-slate-200">
+                  No stage elements are configured for this stage yet.
+                </div>
+              )}
+            </div>
+
+            <ParticipantStageFeedPlaceholder />
+          </div>
+
+          <ParticipantStageSidebar
+            track={track}
+            nextActionTitle={nextAction.title}
+            nextActionDescription={nextAction.description}
+            liveEvents={liveEvents}
+            sidebarTasks={sidebarTasks}
+            guide={guide}
+            hasAiMentor={Boolean(aiMentorElement)}
+            hasJournal={Boolean(journalElement)}
+            onOpenAiMentor={openAiMentor}
+            onOpenJournal={openJournal}
+            onScrollToElement={scrollToElement}
+            aiMentorElementId={aiMentorElement?.id}
+            journalElementId={journalElement?.id}
+          />
+        </div>
+      </div>
+
+      <ParticipantStageModals modal={modal} onClose={() => setModal(null)} />
+    </div>
+  );
+}
