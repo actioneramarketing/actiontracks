@@ -8,16 +8,13 @@ import {
   asResourceArray,
   asString,
   asStringArray,
-  asTaskArray,
   getReflectionJournalPrompts,
 } from "@/lib/utils/element-settings";
-import {
-  priorityBadgeClass,
-  priorityIconClass,
-  resourceIconClass,
-} from "./element-ux-styles";
+import { resourceIconClass } from "./element-ux-styles";
 import { CommitmentBuilderElement } from "./elements/CommitmentBuilderElement";
+import { TaskListElement } from "./elements/TaskListElement";
 import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
+import type { ParticipantTaskRowView } from "@/lib/utils/participant-tasks";
 
 export interface ElementContentHandlers {
   onOpenAiMentor?: (element: StageElement) => void;
@@ -32,14 +29,24 @@ export interface CommitmentElementContext {
   savedCommitment?: ParticipantCommitmentView;
 }
 
+export interface TaskListElementContext {
+  trackId: string;
+  stageId: string;
+  trackSlug: string;
+  stageSlug: string;
+  savedTasks: ParticipantTaskRowView[];
+}
+
 export function StageElementContent({
   element,
   handlers = {},
   commitmentContext,
+  taskListContext,
 }: {
   element: StageElement;
   handlers?: ElementContentHandlers;
   commitmentContext?: CommitmentElementContext;
+  taskListContext?: TaskListElementContext;
 }) {
   const settings = asRecord(element.settings_json);
 
@@ -69,7 +76,23 @@ export function StageElementContent({
         />
       );
     case "task_list":
-      return <TaskListElementContent settings={settings} />;
+      if (!taskListContext) {
+        return (
+          <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
+            Task List is unavailable.
+          </div>
+        );
+      }
+      return (
+        <TaskListElement
+          element={element}
+          trackId={taskListContext.trackId}
+          stageId={taskListContext.stageId}
+          trackSlug={taskListContext.trackSlug}
+          stageSlug={taskListContext.stageSlug}
+          savedTasks={taskListContext.savedTasks}
+        />
+      );
     case "ai_mentor":
       return (
         <AiMentorElementContent
@@ -162,55 +185,6 @@ function LiveCallElementContent({
           <i className="fa-solid fa-arrow-up-right-from-square" /> {buttonText}
         </button>
       )}
-    </div>
-  );
-}
-
-function TaskListElementContent({ settings }: { settings: Record<string, unknown> }) {
-  const tasks = asTaskArray(settings.tasks, 10).filter((t) => t.title);
-
-  if (tasks.length === 0) {
-    return (
-      <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
-        No tasks configured yet.
-      </div>
-    );
-  }
-
-  return (
-    <div className="px-6 border-t border-slate-100 pt-4 pb-6">
-      <div className="space-y-2">
-        {tasks.map((task, index) => (
-          <div
-            key={index}
-            className="flex items-center p-3 rounded-lg border border-slate-200 hover:border-teal-300 hover:bg-teal-50/30 transition-colors"
-          >
-            <input
-              type="checkbox"
-              readOnly
-              className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 mr-3"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm text-slate-700 font-medium">{task.title}</span>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full ${priorityBadgeClass(task.priority)}`}
-                  >
-                    <i
-                      className={`fa-solid ${priorityIconClass(task.priority)} mr-1 text-[9px]`}
-                    />
-                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                  </span>
-                </div>
-              </div>
-              {task.description ? (
-                <p className="text-xs text-slate-500 mt-1">{task.description}</p>
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

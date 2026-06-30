@@ -15,6 +15,7 @@ import {
   CommitmentElementContext,
   ElementContentHandlers,
   StageElementContent,
+  TaskListElementContext,
 } from "./StageElementContent";
 
 interface StageElementCardProps {
@@ -23,6 +24,7 @@ interface StageElementCardProps {
   onToggle: () => void;
   handlers?: ElementContentHandlers;
   commitmentContext?: CommitmentElementContext;
+  taskListContext?: TaskListElementContext;
 }
 
 function getElementStyle(type: StageElementType) {
@@ -35,11 +37,14 @@ export function StageElementCard({
   onToggle,
   handlers,
   commitmentContext,
+  taskListContext,
 }: StageElementCardProps) {
   const style = getElementStyle(element.element_type);
   const title =
     element.title?.trim() || ELEMENT_TYPE_LABELS[element.element_type] || "Stage Element";
-  const hasToggle = !["live_call", "commitment_builder"].includes(element.element_type);
+  const hasToggle = !["live_call", "commitment_builder", "task_list"].includes(
+    element.element_type
+  );
 
   return (
     <section
@@ -68,15 +73,22 @@ export function StageElementCard({
               ) : null}
             </div>
             {element.description &&
-            !["live_call", "commitment_builder", "ai_mentor", "reflection_journal"].includes(
-              element.element_type
-            ) ? (
+            ![
+              "live_call",
+              "commitment_builder",
+              "task_list",
+              "ai_mentor",
+              "reflection_journal",
+            ].includes(element.element_type) ? (
               <p className="text-sm text-slate-600 mb-2">{element.description}</p>
             ) : null}
             {element.element_type === "live_call" && element.description ? (
               <p className="text-sm text-slate-600 mb-2">{element.description}</p>
             ) : null}
             {element.element_type === "commitment_builder" && element.description ? (
+              <p className="text-sm text-slate-600 mb-2">{element.description}</p>
+            ) : null}
+            {element.element_type === "task_list" && element.description ? (
               <p className="text-sm text-slate-600 mb-2">{element.description}</p>
             ) : null}
           </div>
@@ -87,6 +99,7 @@ export function StageElementCard({
           element={element}
           handlers={handlers}
           commitmentContext={commitmentContext}
+          taskListContext={taskListContext}
         />
       </CollapsiblePanel>
     </section>

@@ -5,7 +5,6 @@ import { ActionTrackStage, GuideProfile, StageElement } from "@/lib/types/databa
 import { NormalizedActionTrack } from "@/lib/utils/normalize-action-track";
 import {
   collectLiveCallEvents,
-  collectSidebarTasks,
   getAiMentorElement,
   getJournalElement,
   getNextActionCopy,
@@ -14,6 +13,8 @@ import {
   getUnlockSubtitle,
   getVisibleStageElements,
 } from "@/lib/participant/stage-page-model";
+import { buildSidebarPendingTasks } from "@/lib/utils/participant-tasks";
+import type { ParticipantTaskRowView } from "@/lib/utils/participant-tasks";
 import { ParticipantStageFeedPlaceholder } from "./ParticipantStageFeedPlaceholder";
 import { ParticipantStageHeader } from "./ParticipantStageHeader";
 import {
@@ -36,6 +37,7 @@ export interface ParticipantStageDashboardProps {
   stageSlug: string;
   commitments: ParticipantCommitmentView[];
   commitmentSummary: string | null;
+  participantTasks: ParticipantTaskRowView[];
 }
 
 export function ParticipantStageDashboard({
@@ -49,6 +51,7 @@ export function ParticipantStageDashboard({
   stageSlug,
   commitments,
   commitmentSummary,
+  participantTasks,
 }: ParticipantStageDashboardProps) {
   const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
 
@@ -74,7 +77,7 @@ export function ParticipantStageDashboard({
   const unlockSubtitle = getUnlockSubtitle(stage, stages);
   const nextAction = getNextActionCopy(stage, visibleElements);
   const liveEvents = collectLiveCallEvents(stages, trackElements);
-  const sidebarTasks = collectSidebarTasks(visibleElements);
+  const sidebarTasks = buildSidebarPendingTasks(visibleElements, participantTasks);
 
   useEffect(() => {
     if (modal) {
@@ -160,6 +163,17 @@ export function ParticipantStageDashboard({
                               trackSlug,
                               stageSlug,
                               savedCommitment: commitmentByElementId[element.id],
+                            }
+                          : undefined
+                      }
+                      taskListContext={
+                        element.element_type === "task_list"
+                          ? {
+                              trackId: track.id,
+                              stageId: stage.id,
+                              trackSlug,
+                              stageSlug,
+                              savedTasks: participantTasks,
                             }
                           : undefined
                       }

@@ -14,12 +14,10 @@ import {
 } from "@/lib/utils/commitment";
 import { asRecord, asStringArray } from "@/lib/utils/element-settings";
 import {
-  PARTICIPANT_KEY_COOKIE,
-  participantKeyCookieOptions,
-} from "@/lib/participant/participant-key";
-import { cookies } from "next/headers";
+  getOptionalParticipantUser,
+  getOrCreateParticipantKey,
+} from "@/lib/participant/get-participant-key";
 import { revalidatePath } from "next/cache";
-import { randomUUID } from "crypto";
 
 function mapCommitmentRow(row: ActionTrackCommitment): ParticipantCommitmentView {
   return {
@@ -28,12 +26,6 @@ function mapCommitmentRow(row: ActionTrackCommitment): ParticipantCommitmentView
     commitmentSummary: row.commitment_summary,
     updatedAt: row.updated_at,
   };
-}
-
-export async function getParticipantKeyFromCookies(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const value = cookieStore.get(PARTICIPANT_KEY_COOKIE)?.value?.trim();
-  return value || null;
 }
 
 export async function getCommitmentsForStage(
@@ -196,32 +188,8 @@ export async function saveCommitment(
     const answersJson = buildCommitmentAnswersJson(questions, answerValues);
     const commitmentSummary = buildCommitmentSummary(questions, answerValues);
 
-    const cookieStore = await cookies();
-    let participantKey = cookieStore.get(PARTICIPANT_KEY_COOKIE)?.value?.trim();
-    const isNewParticipantKey = !participantKey;
-
-    if (!participantKey) {
-      participantKey = randomUUID();
-      cookieStore.set(
-        PARTICIPANT_KEY_COOKIE,
-        participantKey,
-        participantKeyCookieOptions()
-      );
-    }
-
-    let participantUserId: string | null = null;
-    let participantEmail: string | null = null;
-
-    try {
-      const { getCurrentUser } = await import("@/lib/auth/guide");
-      const user = await getCurrentUser();
-      if (user) {
-        participantUserId = user.id;
-        participantEmail = user.email ?? null;
-      }
-    } catch {
-      // Optional auth — anonymous participants are allowed.
-    }
+    const { participantKey } = await getOrCreateParticipantKey();
+    const { participantUserId, participantEmail } = await getOptionalParticipantUser();
 
     const now = new Date().toISOString();
     const payload = {
@@ -247,8 +215,6 @@ export async function saveCommitment(
         trackId,
         stageId,
         elementId,
-        isNewParticipantKey,
-        payloadKeys: Object.keys(payload),
         message: upsertError.message,
         code: upsertError.code,
         details: upsertError.details,

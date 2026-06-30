@@ -172,7 +172,7 @@ export function ParticipantStageSidebar({
           </span>
         </div>
         {sidebarTasks.length === 0 ? (
-          <p className="text-sm text-slate-500 py-2">No tasks configured yet.</p>
+          <p className="text-sm text-slate-500 py-2">No pending tasks.</p>
         ) : (
           <>
             {(["high", "medium", "low"] as const).map((priority) => {

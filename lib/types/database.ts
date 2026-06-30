@@ -114,6 +114,26 @@ export interface ActionTrackCommitment {
   updated_at: string;
 }
 
+export interface ActionTrackParticipantTask {
+  id: string;
+  track_id: string;
+  stage_id: string;
+  element_id: string;
+  participant_user_id: string | null;
+  participant_key: string;
+  task_source: string;
+  guide_task_key: string | null;
+  title: string;
+  description: string | null;
+  priority: string | null;
+  due_date: string | null;
+  is_completed: boolean;
+  completed_at: string | null;
+  sort_order: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActionTrackListItem {
   id: string;
   slug: string;

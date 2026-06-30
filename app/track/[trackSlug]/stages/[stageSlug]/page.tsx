@@ -1,8 +1,11 @@
 import { ParticipantStageDashboard } from "@/components/stage-preview/ParticipantStageDashboard";
 import {
   getCommitmentsForStage,
-  getParticipantKeyFromCookies,
 } from "@/lib/actions/commitments";
+import { getParticipantKeyFromCookies } from "@/lib/participant/get-participant-key";
+import {
+  getParticipantTasksForStage,
+} from "@/lib/actions/participant-tasks";
 import { getEnabledElementsForTrack, getElementsForStage } from "@/lib/actions/stage-elements";
 import { getGuideById } from "@/lib/actions/guides";
 import { getStageBySlug, getStagesForTrack } from "@/lib/actions/stages";
@@ -51,11 +54,14 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     .map((el) => el.id);
 
   const participantKey = await getParticipantKeyFromCookies();
-  const { commitments } = await getCommitmentsForStage(
-    stage.id,
-    participantKey,
-    commitmentElementIds.length > 0 ? commitmentElementIds : undefined
-  );
+  const [{ commitments }, { tasks: participantTasks }] = await Promise.all([
+    getCommitmentsForStage(
+      stage.id,
+      participantKey,
+      commitmentElementIds.length > 0 ? commitmentElementIds : undefined
+    ),
+    getParticipantTasksForStage(track.id, stage.id, participantKey),
+  ]);
 
   const commitmentSummary = getStageCommitmentSummary(commitments);
 
@@ -71,6 +77,9 @@ export default async function ParticipantStagePage({ params }: PageProps) {
       stageSlug={stageSlug}
       commitments={JSON.parse(JSON.stringify(commitments)) as typeof commitments}
       commitmentSummary={commitmentSummary}
+      participantTasks={
+        JSON.parse(JSON.stringify(participantTasks)) as typeof participantTasks
+      }
     />
   );
 }
