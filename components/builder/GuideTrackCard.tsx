@@ -32,15 +32,21 @@ function formatDate(value: string): string | null {
 
 interface GuideTrackCardProps {
   track: ActionTrackListItem;
+  firstStageSlug?: string | null;
 }
 
-export function GuideTrackCard({ track }: GuideTrackCardProps) {
+export function GuideTrackCard({ track, firstStageSlug }: GuideTrackCardProps) {
   const startLabel = formatDate(track.startDate);
   const endLabel = formatDate(track.endDate);
   const trackTypeLabel = track.trackType
     ? formatTrackType(track.trackType)
     : null;
   const initials = getTrackInitials(track.title);
+  const trackSlug = track.slug?.trim();
+  const previewHref =
+    trackSlug && firstStageSlug?.trim()
+      ? `/track/${trackSlug}/stages/${firstStageSlug.trim()}`
+      : null;
 
   return (
     <Card padding="none" className="flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
@@ -112,9 +118,18 @@ export function GuideTrackCard({ track }: GuideTrackCardProps) {
           <Button href={`/guide/tracks/${track.id}/stages`} variant="secondary" size="sm">
             Stages
           </Button>
-          <Button href={`/guide/tracks/${track.id}/preview`} variant="accent" size="sm">
-            Preview
-          </Button>
+          {previewHref ? (
+            <Button href={previewHref} variant="accent" size="sm">
+              Preview
+            </Button>
+          ) : (
+            <div className="flex flex-col items-start gap-1">
+              <Button variant="accent" size="sm" disabled>
+                Preview
+              </Button>
+              <span className="text-xs text-gray-400">Add a stage to preview</span>
+            </div>
+          )}
         </div>
       </div>
     </Card>

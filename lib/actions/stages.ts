@@ -390,6 +390,84 @@ export async function getStagesForTrack(trackId: string): Promise<{
   }
 }
 
+export interface TrackFirstStagePreview {
+  trackId: string;
+  stageId: string;
+  slug: string;
+  stageNumber: number;
+}
+
+export async function getFirstStagesForTracks(trackIds: string[]): Promise<{
+  firstStagesByTrackId: Record<string, TrackFirstStagePreview | null>;
+  error?: string;
+}> {
+  const firstStagesByTrackId = Object.fromEntries(
+    trackIds.map((trackId) => [trackId, null])
+  ) as Record<string, TrackFirstStagePreview | null>;
+
+  if (trackIds.length === 0) {
+    return { firstStagesByTrackId };
+  }
+
+  try {
+    const supabase = tryCreateAdminClient();
+    if (!supabase) {
+      return {
+        firstStagesByTrackId,
+        error:
+          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("action_track_stages")
+      .select("id, track_id, slug, stage_number, created_at")
+      .in("track_id", trackIds);
+
+    if (error) {
+      return { firstStagesByTrackId, error: error.message };
+    }
+
+    const stagesByTrackId = new Map<string, ActionTrackStage[]>();
+
+    for (const row of (data ?? []) as ActionTrackStage[]) {
+      const existing = stagesByTrackId.get(row.track_id) ?? [];
+      existing.push(row);
+      stagesByTrackId.set(row.track_id, existing);
+    }
+
+    for (const [trackId, stages] of stagesByTrackId) {
+      const sorted = [...stages].sort((a, b) => {
+        if (a.stage_number !== b.stage_number) {
+          return a.stage_number - b.stage_number;
+        }
+        return a.created_at.localeCompare(b.created_at);
+      });
+
+      const firstStage = sorted[0];
+      const slug = firstStage?.slug?.trim();
+      if (!firstStage || !slug) {
+        continue;
+      }
+
+      firstStagesByTrackId[trackId] = {
+        trackId,
+        stageId: firstStage.id,
+        slug,
+        stageNumber: firstStage.stage_number,
+      };
+    }
+
+    return { firstStagesByTrackId };
+  } catch (error) {
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : "Failed to load first stages.";
+    return { firstStagesByTrackId, error: message };
+  }
+}
+
 export async function getStageById(stageId: string): Promise<{
   stage: ActionTrackStage | null;
   error?: string;

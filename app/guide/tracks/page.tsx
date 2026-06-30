@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/builder/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { GuideBuilderPageContainer } from "@/components/auth/GuideBuilderGate";
 import { requireGuide } from "@/lib/auth/guide";
+import { getFirstStagesForTracks } from "@/lib/actions/stages";
 import { getActionTracksForGuide } from "@/lib/actions/tracks";
 
 async function GuideTracksContent() {
@@ -13,6 +14,9 @@ async function GuideTracksContent() {
   }
 
   const { tracks, error } = await getActionTracksForGuide(auth.guide.id);
+  const trackIds = tracks.map((track) => track.id);
+  const { firstStagesByTrackId, error: firstStageError } =
+    await getFirstStagesForTracks(trackIds);
 
   return (
     <>
@@ -26,9 +30,9 @@ async function GuideTracksContent() {
         }
       />
 
-      {error && (
+      {(error || firstStageError) && (
         <p className="mb-6 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
-          {error}
+          {error || firstStageError}
         </p>
       )}
 
@@ -43,7 +47,11 @@ async function GuideTracksContent() {
       ) : (
         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
           {tracks.map((track) => (
-            <GuideTrackCard key={track.id} track={track} />
+            <GuideTrackCard
+              key={track.id}
+              track={track}
+              firstStageSlug={firstStagesByTrackId[track.id]?.slug ?? null}
+            />
           ))}
         </div>
       )}
