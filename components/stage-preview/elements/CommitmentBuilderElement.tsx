@@ -8,7 +8,7 @@ import {
 } from "@/lib/utils/commitment";
 import { asRecord, asStringArray } from "@/lib/utils/element-settings";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 interface CommitmentBuilderElementProps {
   element: StageElement;
@@ -39,14 +39,6 @@ export function CommitmentBuilderElement({
     savedCommitment?.answers ?? []
   );
 
-  const [answers, setAnswers] = useState<string[]>(savedAnswers);
-
-  useEffect(() => {
-    setAnswers(
-      mapSavedAnswersToQuestions(questions, savedCommitment?.answers ?? [])
-    );
-  }, [savedCommitment?.updatedAt, element.id, questions]);
-
   if (questions.length === 0) {
     return (
       <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
@@ -58,17 +50,6 @@ export function CommitmentBuilderElement({
   function handleSave(formData: FormData) {
     setMessage(null);
     setError(null);
-
-    formData.set("track_id", trackId);
-    formData.set("stage_id", stageId);
-    formData.set("element_id", element.id);
-    formData.set("track_slug", trackSlug);
-    formData.set("stage_slug", stageSlug);
-    formData.set("question_count", String(questions.length));
-
-    questions.forEach((_, index) => {
-      formData.set(`answer_${index}`, answers[index] ?? "");
-    });
 
     startTransition(async () => {
       const result = await saveCommitment(formData);
@@ -88,6 +69,13 @@ export function CommitmentBuilderElement({
         action={handleSave}
         className="space-y-4"
       >
+        <input type="hidden" name="track_id" value={trackId} />
+        <input type="hidden" name="stage_id" value={stageId} />
+        <input type="hidden" name="element_id" value={element.id} />
+        <input type="hidden" name="track_slug" value={trackSlug} />
+        <input type="hidden" name="stage_slug" value={stageSlug} />
+        <input type="hidden" name="question_count" value={String(questions.length)} />
+
         {questions.map((question, index) => (
           <div key={index}>
             <label
@@ -96,16 +84,12 @@ export function CommitmentBuilderElement({
             >
               {question}
             </label>
+            <input type="hidden" name={`question_${index}`} value={question} />
             {index === 1 ? (
               <textarea
                 id={`commitment-${element.id}-${index}`}
                 name={`answer_${index}`}
-                value={answers[index] ?? ""}
-                onChange={(event) => {
-                  const next = [...answers];
-                  next[index] = event.target.value;
-                  setAnswers(next);
-                }}
+                defaultValue={savedAnswers[index] ?? ""}
                 placeholder="Share your deeper motivation..."
                 rows={3}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
@@ -115,12 +99,7 @@ export function CommitmentBuilderElement({
                 id={`commitment-${element.id}-${index}`}
                 name={`answer_${index}`}
                 type="text"
-                value={answers[index] ?? ""}
-                onChange={(event) => {
-                  const next = [...answers];
-                  next[index] = event.target.value;
-                  setAnswers(next);
-                }}
+                defaultValue={savedAnswers[index] ?? ""}
                 placeholder={
                   index === 0
                     ? "e.g., A masterclass on Email Marketing for Coaches"
