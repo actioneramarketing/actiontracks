@@ -30,6 +30,90 @@ export interface SidebarTaskItem {
   dueDate: string;
 }
 
+export interface StageNavLink {
+  stage: ActionTrackStage;
+  href: string;
+}
+
+export interface StageNavigationState {
+  currentIndex: number;
+  totalStages: number;
+  stageLabel: string;
+  previous: StageNavLink | null;
+  next: StageNavLink | null;
+  allStages: StageNavLink[];
+}
+
+export function getOrderedStages(stages: ActionTrackStage[]): ActionTrackStage[] {
+  return [...stages].sort((a, b) => a.stage_number - b.stage_number);
+}
+
+function buildStageHref(trackSlug: string, stage: ActionTrackStage): string | null {
+  const slug = stage.slug?.trim();
+  if (!slug || !trackSlug.trim()) {
+    return null;
+  }
+  return `/track/${trackSlug}/stages/${slug}`;
+}
+
+export function getStageNavigation(
+  trackSlug: string,
+  currentStage: ActionTrackStage,
+  stages: ActionTrackStage[]
+): StageNavigationState {
+  const ordered = getOrderedStages(stages);
+  const totalStages = ordered.length;
+
+  const allStages = ordered
+    .map((item) => {
+      const href = buildStageHref(trackSlug, item);
+      if (!href) {
+        return null;
+      }
+      return { stage: item, href };
+    })
+    .filter((item): item is StageNavLink => item != null);
+
+  const currentIndex = ordered.findIndex(
+    (item) => item.id === currentStage.id || item.slug === currentStage.slug
+  );
+
+  const stageLabel =
+    totalStages > 0
+      ? `Stage ${currentStage.stage_number} of ${totalStages}`
+      : `Stage ${currentStage.stage_number}`;
+
+  if (currentIndex === -1) {
+    return {
+      currentIndex: -1,
+      totalStages,
+      stageLabel,
+      previous: null,
+      next: null,
+      allStages,
+    };
+  }
+
+  const previousStage = currentIndex > 0 ? ordered[currentIndex - 1] : null;
+  const nextStage =
+    currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null;
+
+  const previousHref = previousStage ? buildStageHref(trackSlug, previousStage) : null;
+  const nextHref = nextStage ? buildStageHref(trackSlug, nextStage) : null;
+
+  return {
+    currentIndex,
+    totalStages,
+    stageLabel,
+    previous:
+      previousStage && previousHref
+        ? { stage: previousStage, href: previousHref }
+        : null,
+    next: nextStage && nextHref ? { stage: nextStage, href: nextHref } : null,
+    allStages,
+  };
+}
+
 export function getStageAccomplishmentText(
   stage: ActionTrackStage,
   track: NormalizedActionTrack

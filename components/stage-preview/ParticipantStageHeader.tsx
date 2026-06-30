@@ -2,9 +2,12 @@
 
 import { ActionTrackStage } from "@/lib/types/database";
 import { shadowSoft } from "./shared";
+import { ParticipantStageNavigation } from "./ParticipantStageNavigation";
 
 interface ParticipantStageHeaderProps {
+  trackSlug: string;
   stage: ActionTrackStage;
+  stages: ActionTrackStage[];
   totalStages: number;
   unlockSubtitle: string;
   accomplishmentText: string;
@@ -13,7 +16,9 @@ interface ParticipantStageHeaderProps {
 }
 
 export function ParticipantStageHeader({
+  trackSlug,
   stage,
+  stages,
   totalStages,
   unlockSubtitle,
   accomplishmentText,
@@ -28,6 +33,12 @@ export function ParticipantStageHeader({
         </h1>
         <p className="text-sm text-slate-500 mt-1">{unlockSubtitle}</p>
       </div>
+
+      <ParticipantStageNavigation
+        trackSlug={trackSlug}
+        stage={stage}
+        stages={stages}
+      />
 
       <section id="stage-header" className={`bg-white rounded-2xl p-6 sm:p-8 ${shadowSoft}`}>
         <div className="flex flex-col lg:flex-row items-start justify-between gap-6">

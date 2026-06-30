@@ -125,7 +125,9 @@ export function ParticipantStageDashboard({
     <div className="stage-dashboard-preview w-full text-slate-800 overflow-x-hidden bg-[#f1f5f9] font-[family-name:var(--font-inter,'Inter',ui-sans-serif,system-ui,sans-serif)]">
       <div className="p-4 sm:p-8 w-full max-w-6xl mx-auto space-y-8">
         <ParticipantStageHeader
+          trackSlug={trackSlug}
           stage={stage}
+          stages={stages}
           totalStages={stages.length}
           unlockSubtitle={unlockSubtitle}
           accomplishmentText={accomplishmentText}
