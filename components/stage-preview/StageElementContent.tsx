@@ -16,18 +16,30 @@ import {
   priorityIconClass,
   resourceIconClass,
 } from "./element-ux-styles";
+import { CommitmentBuilderElement } from "./elements/CommitmentBuilderElement";
+import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
 
 export interface ElementContentHandlers {
   onOpenAiMentor?: (element: StageElement) => void;
   onOpenJournal?: (element: StageElement) => void;
 }
 
+export interface CommitmentElementContext {
+  trackId: string;
+  stageId: string;
+  trackSlug: string;
+  stageSlug: string;
+  savedCommitment?: ParticipantCommitmentView;
+}
+
 export function StageElementContent({
   element,
   handlers = {},
+  commitmentContext,
 }: {
   element: StageElement;
   handlers?: ElementContentHandlers;
+  commitmentContext?: CommitmentElementContext;
 }) {
   const settings = asRecord(element.settings_json);
 
@@ -35,7 +47,27 @@ export function StageElementContent({
     case "live_call":
       return <LiveCallElementContent settings={settings} element={element} />;
     case "commitment_builder":
-      return <CommitmentBuilderElementContent settings={settings} />;
+      if (!commitmentContext) {
+        return (
+          <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
+            Commitment Builder is unavailable.
+          </div>
+        );
+      }
+      return (
+        <CommitmentBuilderElement
+          element={element}
+          trackId={commitmentContext.trackId}
+          stageId={commitmentContext.stageId}
+          trackSlug={commitmentContext.trackSlug}
+          stageSlug={commitmentContext.stageSlug}
+          savedCommitment={
+            commitmentContext.savedCommitment?.elementId === element.id
+              ? commitmentContext.savedCommitment
+              : undefined
+          }
+        />
+      );
     case "task_list":
       return <TaskListElementContent settings={settings} />;
     case "ai_mentor":
@@ -130,60 +162,6 @@ function LiveCallElementContent({
           <i className="fa-solid fa-arrow-up-right-from-square" /> {buttonText}
         </button>
       )}
-    </div>
-  );
-}
-
-function CommitmentBuilderElementContent({
-  settings,
-}: {
-  settings: Record<string, unknown>;
-}) {
-  const questions = asStringArray(settings.questions, 5).filter(Boolean);
-
-  if (questions.length === 0) {
-    return (
-      <div className="px-6 pb-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
-        Commitment questions will appear here once configured.
-      </div>
-    );
-  }
-
-  return (
-    <div className="px-6 pb-6 border-t border-slate-100 pt-4">
-      <div className="space-y-4">
-        {questions.map((question, index) => (
-          <div key={index}>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              {question}
-            </label>
-            {index === 1 ? (
-              <textarea
-                readOnly
-                placeholder="Share your deeper motivation..."
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-              />
-            ) : (
-              <input
-                readOnly
-                type="text"
-                placeholder="Your answer..."
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
-              />
-            )}
-          </div>
-        ))}
-        <button
-          type="button"
-          disabled
-          title="Saving commitments is coming soon"
-          className="w-full sm:w-auto px-6 py-3 bg-emerald-600/60 text-white font-semibold rounded-xl cursor-not-allowed inline-flex items-center justify-center gap-2"
-        >
-          <i className="fa-solid fa-check" /> Save My Commitment
-        </button>
-        <p className="text-xs text-slate-500">Saving commitments is coming soon.</p>
-      </div>
     </div>
   );
 }

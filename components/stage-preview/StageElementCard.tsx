@@ -12,6 +12,7 @@ import {
   ELEMENT_UX_STYLES,
 } from "./element-ux-styles";
 import {
+  CommitmentElementContext,
   ElementContentHandlers,
   StageElementContent,
 } from "./StageElementContent";
@@ -21,6 +22,7 @@ interface StageElementCardProps {
   expanded: boolean;
   onToggle: () => void;
   handlers?: ElementContentHandlers;
+  commitmentContext?: CommitmentElementContext;
 }
 
 function getElementStyle(type: StageElementType) {
@@ -32,6 +34,7 @@ export function StageElementCard({
   expanded,
   onToggle,
   handlers,
+  commitmentContext,
 }: StageElementCardProps) {
   const style = getElementStyle(element.element_type);
   const title =
@@ -80,7 +83,11 @@ export function StageElementCard({
         </div>
       </div>
       <CollapsiblePanel expanded={hasToggle ? expanded : true}>
-        <StageElementContent element={element} handlers={handlers} />
+        <StageElementContent
+          element={element}
+          handlers={handlers}
+          commitmentContext={commitmentContext}
+        />
       </CollapsiblePanel>
     </section>
   );

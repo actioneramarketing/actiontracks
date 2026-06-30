@@ -17,6 +17,7 @@ interface ParticipantStageSidebarProps {
   liveEvents: LiveCallEventItem[];
   sidebarTasks: SidebarTaskItem[];
   guide: GuideProfile | null;
+  commitmentSummary: string | null;
   hasAiMentor: boolean;
   hasJournal: boolean;
   onOpenAiMentor: () => void;
@@ -44,6 +45,7 @@ export function ParticipantStageSidebar({
   liveEvents,
   sidebarTasks,
   guide,
+  commitmentSummary,
   hasAiMentor,
   hasJournal,
   onOpenAiMentor,
@@ -81,7 +83,9 @@ export function ParticipantStageSidebar({
             <p className="text-xs text-emerald-100 mb-2 uppercase tracking-wide font-semibold">
               You&apos;re Creating:
             </p>
-            <p className="text-sm font-medium text-white italic">Not set yet</p>
+            <p className="text-sm font-medium text-white italic">
+              {commitmentSummary?.trim() || "Not set yet"}
+            </p>
           </div>
         </div>
       </section>

@@ -22,6 +22,7 @@ import {
 } from "./ParticipantStageModals";
 import { ParticipantStageSidebar } from "./ParticipantStageSidebar";
 import { StageElementCard } from "./StageElementCard";
+import type { ParticipantCommitmentView } from "@/lib/utils/commitment";
 import "./stage-dashboard-preview.css";
 
 export interface ParticipantStageDashboardProps {
@@ -31,6 +32,10 @@ export interface ParticipantStageDashboardProps {
   elements: StageElement[];
   trackElements: StageElement[];
   guide: GuideProfile | null;
+  trackSlug: string;
+  stageSlug: string;
+  commitments: ParticipantCommitmentView[];
+  commitmentSummary: string | null;
 }
 
 export function ParticipantStageDashboard({
@@ -40,8 +45,17 @@ export function ParticipantStageDashboard({
   elements,
   trackElements,
   guide,
+  trackSlug,
+  stageSlug,
+  commitments,
+  commitmentSummary,
 }: ParticipantStageDashboardProps) {
   const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
+
+  const commitmentByElementId = useMemo(
+    () => Object.fromEntries(commitments.map((item) => [item.elementId, item])),
+    [commitments]
+  );
 
   const [expandedById, setExpandedById] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(visibleElements.map((el) => [el.id, true]))
@@ -138,6 +152,17 @@ export function ParticipantStageDashboard({
                       expanded={expandedById[element.id] ?? true}
                       onToggle={() => toggleElement(element.id)}
                       handlers={elementHandlers}
+                      commitmentContext={
+                        element.element_type === "commitment_builder"
+                          ? {
+                              trackId: track.id,
+                              stageId: stage.id,
+                              trackSlug,
+                              stageSlug,
+                              savedCommitment: commitmentByElementId[element.id],
+                            }
+                          : undefined
+                      }
                     />
                   ))}
                 </>
@@ -158,6 +183,7 @@ export function ParticipantStageDashboard({
             liveEvents={liveEvents}
             sidebarTasks={sidebarTasks}
             guide={guide}
+            commitmentSummary={commitmentSummary}
             hasAiMentor={Boolean(aiMentorElement)}
             hasJournal={Boolean(journalElement)}
             onOpenAiMentor={openAiMentor}

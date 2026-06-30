@@ -99,6 +99,21 @@ export interface StageElement {
   updated_at: string;
 }
 
+export interface ActionTrackCommitment {
+  id: string;
+  track_id: string;
+  stage_id: string;
+  element_id: string;
+  participant_user_id: string | null;
+  participant_key: string;
+  participant_email: string | null;
+  answers_json: Record<string, unknown>;
+  commitment_summary: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActionTrackListItem {
   id: string;
   slug: string;

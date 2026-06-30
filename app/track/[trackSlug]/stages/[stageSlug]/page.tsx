@@ -1,8 +1,13 @@
 import { ParticipantStageDashboard } from "@/components/stage-preview/ParticipantStageDashboard";
+import {
+  getCommitmentsForStage,
+  getParticipantKeyFromCookies,
+} from "@/lib/actions/commitments";
 import { getEnabledElementsForTrack, getElementsForStage } from "@/lib/actions/stage-elements";
 import { getGuideById } from "@/lib/actions/guides";
 import { getStageBySlug, getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
+import { getStageCommitmentSummary } from "@/lib/utils/commitment";
 import {
   getVisibleStageElements,
   serializeGuideForParticipant,
@@ -41,6 +46,19 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     stageElements.filter((el) => el.is_enabled)
   );
 
+  const commitmentElementIds = enabledElements
+    .filter((el) => el.element_type === "commitment_builder")
+    .map((el) => el.id);
+
+  const participantKey = await getParticipantKeyFromCookies();
+  const { commitments } = await getCommitmentsForStage(
+    stage.id,
+    participantKey,
+    commitmentElementIds.length > 0 ? commitmentElementIds : undefined
+  );
+
+  const commitmentSummary = getStageCommitmentSummary(commitments);
+
   return (
     <ParticipantStageDashboard
       track={serializeActionTrackForClient(track)}
@@ -49,6 +67,10 @@ export default async function ParticipantStagePage({ params }: PageProps) {
       elements={JSON.parse(JSON.stringify(enabledElements)) as typeof enabledElements}
       trackElements={JSON.parse(JSON.stringify(trackElements)) as typeof trackElements}
       guide={serializeGuideForParticipant(guide)}
+      trackSlug={trackSlug}
+      stageSlug={stageSlug}
+      commitments={JSON.parse(JSON.stringify(commitments)) as typeof commitments}
+      commitmentSummary={commitmentSummary}
     />
   );
 }
