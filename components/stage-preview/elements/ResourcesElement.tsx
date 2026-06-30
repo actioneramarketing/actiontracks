@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { StageElement } from "@/lib/types/database";
 import { asRecord } from "@/lib/utils/element-settings";
 import {
@@ -8,15 +9,33 @@ import {
   resourceActionIcon,
   StageResourceItem,
 } from "@/lib/utils/stage-resources";
+import {
+  getVideoEmbedUrl,
+  isVideoResource,
+} from "@/lib/utils/video-embed";
+import { ResourceVideoModal } from "../ResourceVideoModal";
 import { resourceIconClass } from "../element-ux-styles";
 
 interface ResourcesElementProps {
   element: StageElement;
 }
 
-function ResourceRow({ resource }: { resource: StageResourceItem }) {
+function ResourceRow({
+  resource,
+  onWatchVideo,
+}: {
+  resource: StageResourceItem;
+  onWatchVideo: (resource: StageResourceItem, embedUrl: string) => void;
+}) {
   const subtitle = formatResourceSubtitle(resource);
   const hasUrl = Boolean(resource.url.trim());
+  const isVideo = isVideoResource(resource);
+  const embedUrl = hasUrl ? getVideoEmbedUrl(resource.url) : null;
+  const openInModal = isVideo && Boolean(embedUrl);
+
+  const pendingMessage = isVideo
+    ? "Video link coming soon."
+    : "Resource link coming soon.";
 
   const inner = (
     <>
@@ -28,7 +47,10 @@ function ResourceRow({ resource }: { resource: StageResourceItem }) {
             <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
           ) : null}
           {!hasUrl ? (
-            <p className="text-xs text-slate-400 mt-0.5">Resource link coming soon.</p>
+            <p className="text-xs text-slate-400 mt-0.5">{pendingMessage}</p>
+          ) : null}
+          {openInModal ? (
+            <p className="text-xs text-amber-700 mt-0.5 font-medium">Watch</p>
           ) : null}
         </div>
       </div>
@@ -39,6 +61,18 @@ function ResourceRow({ resource }: { resource: StageResourceItem }) {
       />
     </>
   );
+
+  if (openInModal && embedUrl) {
+    return (
+      <button
+        type="button"
+        onClick={() => onWatchVideo(resource, embedUrl)}
+        className="w-full flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50 transition-colors group text-left"
+      >
+        {inner}
+      </button>
+    );
+  }
 
   if (hasUrl) {
     return (
@@ -63,6 +97,20 @@ function ResourceRow({ resource }: { resource: StageResourceItem }) {
 export function ResourcesElement({ element }: ResourcesElementProps) {
   const settings = asRecord(element.settings_json);
   const resources = parseStageResources(settings);
+  const [activeVideo, setActiveVideo] = useState<{
+    resource: StageResourceItem;
+    embedUrl: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (activeVideo) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+    document.body.style.overflow = "";
+  }, [activeVideo]);
 
   if (resources.length === 0) {
     return (
@@ -73,13 +121,29 @@ export function ResourcesElement({ element }: ResourcesElementProps) {
   }
 
   return (
-    <div className="px-6 pb-6 border-t border-slate-100 pt-4">
-      <div className="space-y-2">
-        {resources.map((resource, index) => (
-          <ResourceRow key={`${resource.title}-${index}`} resource={resource} />
-        ))}
+    <>
+      <div className="px-6 pb-6 border-t border-slate-100 pt-4">
+        <div className="space-y-2">
+          {resources.map((resource, index) => (
+            <ResourceRow
+              key={`${resource.title}-${index}`}
+              resource={resource}
+              onWatchVideo={(selected, embedUrl) =>
+                setActiveVideo({ resource: selected, embedUrl })
+              }
+            />
+          ))}
+        </div>
       </div>
-    </div>
+
+      {activeVideo ? (
+        <ResourceVideoModal
+          resource={activeVideo.resource}
+          embedUrl={activeVideo.embedUrl}
+          onClose={() => setActiveVideo(null)}
+        />
+      ) : null}
+    </>
   );
 }
 

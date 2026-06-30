@@ -89,6 +89,12 @@ export function resourceActionIcon(type: string, hasUrl: boolean): string {
   }
 
   switch (type.toLowerCase()) {
+    case "video":
+    case "youtube":
+    case "vimeo":
+    case "loom":
+    case "embed":
+      return "fa-play";
     case "link":
     case "url":
     case "website":

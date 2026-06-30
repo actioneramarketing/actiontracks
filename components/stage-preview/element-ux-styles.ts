@@ -103,6 +103,10 @@ export function resourceIconClass(type: string): string {
     case "document":
       return "fa-regular fa-file-word text-blue-500";
     case "video":
+    case "youtube":
+    case "vimeo":
+    case "loom":
+    case "embed":
       return "fa-solid fa-play text-red-500";
     case "audio":
       return "fa-solid fa-volume-high text-purple-500";
