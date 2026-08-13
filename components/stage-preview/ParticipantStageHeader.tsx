@@ -13,6 +13,7 @@ interface ParticipantStageHeaderProps {
   accomplishmentText: string;
   actionCount: number;
   isGuidePreview?: boolean;
+  isSiteAdminPreview?: boolean;
 }
 
 export function ParticipantStageHeader({
@@ -24,6 +25,7 @@ export function ParticipantStageHeader({
   accomplishmentText,
   actionCount,
   isGuidePreview = false,
+  isSiteAdminPreview = false,
 }: ParticipantStageHeaderProps) {
   return (
     <>
@@ -35,6 +37,10 @@ export function ParticipantStageHeader({
           {isGuidePreview ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
               Guide Preview
+            </span>
+          ) : isSiteAdminPreview ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              Site Admin Preview
             </span>
           ) : null}
         </div>

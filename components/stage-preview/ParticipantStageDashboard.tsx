@@ -44,6 +44,7 @@ export interface ParticipantStageDashboardProps {
   participantTasks: ParticipantTaskRowView[];
   trackJournalEntries: ParticipantJournalEntryView[];
   isGuidePreview?: boolean;
+  isSiteAdminPreview?: boolean;
 }
 
 export function ParticipantStageDashboard({
@@ -60,6 +61,7 @@ export function ParticipantStageDashboard({
   participantTasks,
   trackJournalEntries,
   isGuidePreview = false,
+  isSiteAdminPreview = false,
 }: ParticipantStageDashboardProps) {
   const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
 
@@ -151,6 +153,7 @@ export function ParticipantStageDashboard({
           accomplishmentText={accomplishmentText}
           actionCount={visibleElements.length}
           isGuidePreview={isGuidePreview}
+          isSiteAdminPreview={isSiteAdminPreview}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

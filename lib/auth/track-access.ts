@@ -3,6 +3,7 @@ import "server-only";
 import { getEnrollmentForTrackUser } from "@/lib/actions/enrollments";
 import { getCurrentGuide, getCurrentUser, trackBelongsToGuide } from "@/lib/auth/guide";
 import { getCurrentParticipant } from "@/lib/auth/participant";
+import { isSiteAdminEmail } from "@/lib/auth/site-admin";
 import { ActionTrackEnrollment, ActionTrackParticipant, GuideProfile } from "@/lib/types/database";
 import { isEnrollmentCurrentlyAccessible } from "@/lib/utils/normalize-enrollment";
 import type { User } from "@supabase/supabase-js";
@@ -10,6 +11,7 @@ import type { User } from "@supabase/supabase-js";
 export type TrackAccessResult =
   | { type: "unauthenticated" }
   | { type: "preview"; guide: GuideProfile; user: User }
+  | { type: "site_admin_preview"; user: User }
   | {
       type: "enrolled";
       enrollment: ActionTrackEnrollment;
@@ -31,7 +33,11 @@ export async function userCanAccessTrack(
   user: User | null
 ): Promise<boolean> {
   const result = await resolveTrackAccess(track, user);
-  return result.type === "preview" || result.type === "enrolled";
+  return (
+    result.type === "preview" ||
+    result.type === "enrolled" ||
+    result.type === "site_admin_preview"
+  );
 }
 
 export async function requireTrackEnrollment(track: {
@@ -54,6 +60,10 @@ async function resolveTrackAccess(
     const guide = await getCurrentGuide();
     if (isGuideOwner(track.guide_id, guide)) {
       return { type: "preview", guide, user };
+    }
+
+    if (isSiteAdminEmail(user.email)) {
+      return { type: "site_admin_preview", user };
     }
 
     const participant = await getCurrentParticipant();

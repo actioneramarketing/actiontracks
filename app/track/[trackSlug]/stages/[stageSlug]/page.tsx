@@ -130,6 +130,7 @@ export default async function ParticipantStagePage({ params }: PageProps) {
         JSON.parse(JSON.stringify(trackJournalEntries)) as typeof trackJournalEntries
       }
       isGuidePreview={access.type === "preview"}
+      isSiteAdminPreview={access.type === "site_admin_preview"}
     />
   );
 }
