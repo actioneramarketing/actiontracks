@@ -185,6 +185,10 @@ export async function registerParticipant(
     return { error: "Authentication is not configured." };
   }
 
+  const returnTo = getSafeReturnPath(
+    String(formData.get("return_to") ?? "").trim()
+  );
+  const nextPath = returnTo || "/my-tracks";
   const origin = await getRequestOrigin();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -192,7 +196,7 @@ export async function registerParticipant(
     options: {
       data: { full_name: fullName },
       emailRedirectTo: origin
-        ? `${origin}/auth/callback?next=${encodeURIComponent("/my-tracks")}`
+        ? `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
         : undefined,
     },
   });
@@ -227,9 +231,12 @@ export async function registerParticipant(
   }
 
   revalidatePath("/my-tracks");
+  if (returnTo) {
+    revalidatePath(returnTo);
+  }
 
   if (data.session) {
-    redirect("/my-tracks");
+    redirect(nextPath);
   }
 
   return { needsEmailConfirmation: true };
@@ -286,6 +293,9 @@ export async function loginParticipant(
 
   revalidatePath("/my-tracks");
   const returnTo = getSafeReturnPath(String(formData.get("return_to") ?? "").trim());
+  if (returnTo) {
+    revalidatePath(returnTo);
+  }
   redirect(returnTo || "/my-tracks");
 }
 

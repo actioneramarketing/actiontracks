@@ -8,7 +8,8 @@ function isParticipantNextPath(next: string): boolean {
     next.startsWith("/my-tracks/") ||
     next.startsWith("/participant/") ||
     next.startsWith("/track/") ||
-    next === "/join"
+    next === "/join" ||
+    next.startsWith("/join/")
   );
 }
 

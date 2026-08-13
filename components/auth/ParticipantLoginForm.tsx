@@ -53,7 +53,14 @@ export function ParticipantLoginForm({ returnTo = "" }: { returnTo?: string }) {
 
       <p className="mt-6 text-center text-sm text-gray-600">
         Need an account?{" "}
-        <Link href="/join" className="text-teal-700 hover:underline">
+        <Link
+          href={
+            returnTo
+              ? `/participant/register?returnTo=${encodeURIComponent(returnTo)}`
+              : "/participant/register"
+          }
+          className="text-teal-700 hover:underline"
+        >
           Join
         </Link>
       </p>

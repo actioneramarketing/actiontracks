@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
-export function RegisterParticipantForm() {
+export function RegisterParticipantForm({ returnTo = "" }: { returnTo?: string }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
@@ -35,7 +35,15 @@ export function RegisterParticipantForm() {
           Check your email to confirm your account. Once confirmed, you can log
           in and access your Action Tracks.
         </p>
-        <Button href="/participant/login" variant="primary" className="mt-6">
+        <Button
+          href={
+            returnTo
+              ? `/participant/login?returnTo=${encodeURIComponent(returnTo)}`
+              : "/participant/login"
+          }
+          variant="primary"
+          className="mt-6"
+        >
           Go to Login
         </Button>
       </Card>
@@ -45,6 +53,7 @@ export function RegisterParticipantForm() {
   return (
     <Card padding="lg" className="max-w-md mx-auto">
       <form action={handleSubmit} className="space-y-5">
+        {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
         <FormField
           label="Full Name"
           name="full_name"
@@ -87,7 +96,14 @@ export function RegisterParticipantForm() {
 
       <p className="mt-6 text-center text-sm text-gray-600">
         Already have an account?{" "}
-        <Link href="/participant/login" className="text-teal-700 hover:underline">
+        <Link
+          href={
+            returnTo
+              ? `/participant/login?returnTo=${encodeURIComponent(returnTo)}`
+              : "/participant/login"
+          }
+          className="text-teal-700 hover:underline"
+        >
           Log in
         </Link>
       </p>

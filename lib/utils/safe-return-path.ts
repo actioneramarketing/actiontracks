@@ -13,3 +13,13 @@ export function getSafeReturnPath(
 
   return value;
 }
+
+export function withReturnToQuery(path: string, returnTo?: string | null): string {
+  const safe = getSafeReturnPath(returnTo);
+  if (!safe) {
+    return path;
+  }
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}returnTo=${encodeURIComponent(safe)}`;
+}
