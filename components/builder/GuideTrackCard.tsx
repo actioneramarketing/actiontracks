@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { CopyLinkButton } from "@/components/ui/CopyLinkButton";
 import { ActionTrackListItem } from "@/lib/types/database";
 import { getTrackInitials } from "@/lib/utils/action-track-assets";
+import { buildAppUrl, buildTrackJoinPath } from "@/lib/utils/app-url";
 
 const TRACK_TYPE_LABELS: Record<string, string> = {
   live_guided: "Live Guided",
@@ -47,6 +49,9 @@ export function GuideTrackCard({ track, firstStageSlug }: GuideTrackCardProps) {
     trackSlug && firstStageSlug?.trim()
       ? `/track/${trackSlug}/stages/${firstStageSlug.trim()}`
       : null;
+  const joinUrl = trackSlug
+    ? buildAppUrl(buildTrackJoinPath(trackSlug))
+    : null;
 
   return (
     <Card padding="none" className="flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
@@ -130,6 +135,9 @@ export function GuideTrackCard({ track, firstStageSlug }: GuideTrackCardProps) {
               <span className="text-xs text-gray-400">Add a stage to preview</span>
             </div>
           )}
+          {joinUrl ? (
+            <CopyLinkButton value={joinUrl} label="Copy Join Link" variant="outline" />
+          ) : null}
         </div>
       </div>
     </Card>

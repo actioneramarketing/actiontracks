@@ -2,11 +2,13 @@ import Link from "next/link";
 import { logout, logoutParticipant } from "@/lib/actions/auth";
 import { getCurrentUser, getCurrentGuide } from "@/lib/auth/guide";
 import { getCurrentParticipant } from "@/lib/auth/participant";
+import { isSiteAdminEmail } from "@/lib/auth/site-admin";
 
 export async function Nav() {
   const user = await getCurrentUser();
   const guide = user ? await getCurrentGuide() : null;
   const participant = user ? await getCurrentParticipant() : null;
+  const isSiteAdmin = isSiteAdminEmail(user?.email);
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
@@ -52,6 +54,14 @@ export async function Nav() {
                   className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
                 >
                   Guide Profile
+                </Link>
+              ) : null}
+              {isSiteAdmin ? (
+                <Link
+                  href="/site-admin/action-tracks"
+                  className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+                >
+                  Site Admin
                 </Link>
               ) : null}
               <form action={guide ? logout : logoutParticipant}>
