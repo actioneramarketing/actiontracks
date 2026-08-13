@@ -1,4 +1,5 @@
 import { ParticipantStageDashboard } from "@/components/stage-preview/ParticipantStageDashboard";
+import { TrackEnrollmentRequiredCard } from "@/components/auth/TrackEnrollmentRequiredCard";
 import {
   getCommitmentsForStage,
 } from "@/lib/actions/commitments";
@@ -13,13 +14,15 @@ import { getEnabledElementsForTrack, getElementsForStage } from "@/lib/actions/s
 import { getGuideById } from "@/lib/actions/guides";
 import { getStageBySlug, getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
+import { requireTrackEnrollment } from "@/lib/auth/track-access";
 import { getStageCommitmentSummary } from "@/lib/utils/commitment";
+import { getSafeReturnPath } from "@/lib/utils/safe-return-path";
 import {
   getVisibleStageElements,
   serializeGuideForParticipant,
 } from "@/lib/participant/stage-page-model";
 import { serializeActionTrackForClient } from "@/lib/utils/normalize-action-track";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ trackSlug: string; stageSlug: string }>;
@@ -31,6 +34,44 @@ export default async function ParticipantStagePage({ params }: PageProps) {
 
   if (!track) {
     notFound();
+  }
+
+  const stagePath = `/track/${trackSlug}/stages/${stageSlug}`;
+  let access;
+  try {
+    access = await requireTrackEnrollment(track);
+  } catch (error) {
+    console.error("[ParticipantStagePage] Access check failed", {
+      trackSlug,
+      stageSlug,
+      error,
+    });
+    return (
+      <TrackEnrollmentRequiredCard
+        trackTitle={track.title}
+        variant="error"
+      />
+    );
+  }
+
+  if (access.type === "unauthenticated") {
+    const returnTo = getSafeReturnPath(stagePath, "/my-tracks");
+    redirect(
+      `/participant/login?returnTo=${encodeURIComponent(returnTo)}`
+    );
+  }
+
+  if (access.type === "denied") {
+    return <TrackEnrollmentRequiredCard trackTitle={track.title} />;
+  }
+
+  if (access.type === "error") {
+    return (
+      <TrackEnrollmentRequiredCard
+        trackTitle={track.title}
+        variant="error"
+      />
+    );
   }
 
   const { stage } = await getStageBySlug(track.id, stageSlug);
@@ -88,6 +129,7 @@ export default async function ParticipantStagePage({ params }: PageProps) {
       trackJournalEntries={
         JSON.parse(JSON.stringify(trackJournalEntries)) as typeof trackJournalEntries
       }
+      isGuidePreview={access.type === "preview"}
     />
   );
 }

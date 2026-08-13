@@ -1,23 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSafeReturnPath } from "@/lib/utils/safe-return-path";
 import { NextResponse } from "next/server";
-
-function getSafeNextPath(raw: string | null, fallback: string): string {
-  if (!raw) {
-    return fallback;
-  }
-
-  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) {
-    return fallback;
-  }
-
-  return raw;
-}
 
 function isParticipantNextPath(next: string): boolean {
   return (
     next === "/my-tracks" ||
     next.startsWith("/my-tracks/") ||
     next.startsWith("/participant/") ||
+    next.startsWith("/track/") ||
     next === "/join"
   );
 }
@@ -25,7 +15,7 @@ function isParticipantNextPath(next: string): boolean {
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = getSafeNextPath(searchParams.get("next"), "/guide/profile");
+  const next = getSafeReturnPath(searchParams.get("next"), "/guide/profile");
   const errorRedirect = isParticipantNextPath(next)
     ? `${origin}/participant/login?error=auth_callback`
     : `${origin}/login?error=auth_callback`;

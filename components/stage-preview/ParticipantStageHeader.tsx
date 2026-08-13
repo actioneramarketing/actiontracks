@@ -12,6 +12,7 @@ interface ParticipantStageHeaderProps {
   stageTagline: string;
   accomplishmentText: string;
   actionCount: number;
+  isGuidePreview?: boolean;
 }
 
 export function ParticipantStageHeader({
@@ -22,13 +23,21 @@ export function ParticipantStageHeader({
   stageTagline,
   accomplishmentText,
   actionCount,
+  isGuidePreview = false,
 }: ParticipantStageHeaderProps) {
   return (
     <>
       <div id="page-title" className="pt-6 pb-2">
-        <h1 className="text-2xl font-bold text-slate-800">
-          Stage {stage.stage_number}: {stage.title}
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-800">
+            Stage {stage.stage_number}: {stage.title}
+          </h1>
+          {isGuidePreview ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+              Guide Preview
+            </span>
+          ) : null}
+        </div>
         {stageTagline ? (
           <p className="text-sm text-slate-500 mt-1">{stageTagline}</p>
         ) : null}

@@ -1,5 +1,7 @@
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/builder/EmptyState";
+import { EnrolledTrackCard } from "@/components/tracks/EnrolledTrackCard";
+import { getEnrolledTracksForParticipant } from "@/lib/actions/enrollments";
 import { requireParticipant } from "@/lib/auth/participant";
 import { redirect } from "next/navigation";
 
@@ -28,9 +30,10 @@ export default async function MyTracksPage() {
   }
 
   const displayName = auth.participant.full_name.trim();
+  const { tracks, error } = await getEnrolledTracksForParticipant(auth.user.id);
 
   return (
-    <PageContainer className="max-w-4xl">
+    <PageContainer className="max-w-6xl">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
           Your Action Tracks
@@ -42,26 +45,31 @@ export default async function MyTracksPage() {
         </p>
       </div>
 
-      <Card
-        padding="lg"
-        className="text-center bg-gradient-to-br from-white to-gray-50 border-gray-200"
-      >
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-teal-100 text-3xl">
-          🎯
+      {error ? (
+        <p className="mb-6 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+          We couldn't load all of your enrollments. Please try again.
+        </p>
+      ) : null}
+
+      {tracks.length === 0 && !error ? (
+        <EmptyState
+          icon="🎯"
+          title="You don't have any Action Tracks yet."
+          description="When you're enrolled in an Action Track, it will appear here."
+        />
+      ) : tracks.length === 0 ? (
+        <EmptyState
+          icon="🎯"
+          title="Unable to load enrollments"
+          description="Please try again in a moment."
+        />
+      ) : (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          {tracks.map((item) => (
+            <EnrolledTrackCard key={item.enrollment.id} item={item} />
+          ))}
         </div>
-        <h2 className="text-xl font-semibold text-gray-900">
-          Enrolled Action Tracks will appear here soon.
-        </h2>
-        <p className="mt-4 text-sm text-gray-600 leading-relaxed max-w-xl mx-auto">
-          You&apos;re signed in as a participant. Access and enrollment for live
-          Action Tracks is coming next. Your saved preview activity on stage
-          pages is unchanged.
-        </p>
-        <p className="mt-4 text-xs text-gray-500">
-          Track enrollment, stage release dates, and progress tracking have not
-          been enabled yet.
-        </p>
-      </Card>
+      )}
     </PageContainer>
   );
 }

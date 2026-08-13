@@ -6,6 +6,7 @@ import {
   upsertParticipantForUser,
 } from "@/lib/actions/participants";
 import { createClient } from "@/lib/supabase/server";
+import { getSafeReturnPath } from "@/lib/utils/safe-return-path";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -284,7 +285,8 @@ export async function loginParticipant(
   }
 
   revalidatePath("/my-tracks");
-  redirect("/my-tracks");
+  const returnTo = getSafeReturnPath(String(formData.get("return_to") ?? "").trim());
+  redirect(returnTo || "/my-tracks");
 }
 
 export async function logoutParticipant() {

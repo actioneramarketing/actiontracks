@@ -43,6 +43,7 @@ export interface ParticipantStageDashboardProps {
   commitmentSummary: string | null;
   participantTasks: ParticipantTaskRowView[];
   trackJournalEntries: ParticipantJournalEntryView[];
+  isGuidePreview?: boolean;
 }
 
 export function ParticipantStageDashboard({
@@ -58,6 +59,7 @@ export function ParticipantStageDashboard({
   commitmentSummary,
   participantTasks,
   trackJournalEntries,
+  isGuidePreview = false,
 }: ParticipantStageDashboardProps) {
   const visibleElements = useMemo(() => getVisibleStageElements(elements), [elements]);
 
@@ -148,6 +150,7 @@ export function ParticipantStageDashboard({
           stageTagline={stageTagline}
           accomplishmentText={accomplishmentText}
           actionCount={visibleElements.length}
+          isGuidePreview={isGuidePreview}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

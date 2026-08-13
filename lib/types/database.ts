@@ -43,6 +43,20 @@ export interface ActionTrackParticipant {
   updated_at: string;
 }
 
+export interface ActionTrackEnrollment {
+  id: string;
+  track_id: string;
+  participant_id: string;
+  user_id: string;
+  status: string;
+  enrolled_at: string;
+  access_starts_at: string;
+  access_ends_at: string;
+  participant_key: string;
+  created_at: string;
+  updated_at: string;
+}
+
 /** @deprecated Use GuideProfile */
 export interface ActionTrackGuide {
   id: string;

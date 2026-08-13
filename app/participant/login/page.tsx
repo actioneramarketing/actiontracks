@@ -1,7 +1,18 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ParticipantLoginForm } from "@/components/auth/ParticipantLoginForm";
+import { getSafeReturnPath } from "@/lib/utils/safe-return-path";
 
-export default function ParticipantLoginPage() {
+interface PageProps {
+  searchParams: Promise<{ returnTo?: string | string[] }>;
+}
+
+export default async function ParticipantLoginPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const rawReturnTo = Array.isArray(params.returnTo)
+    ? params.returnTo[0]
+    : params.returnTo;
+  const returnTo = getSafeReturnPath(rawReturnTo);
+
   return (
     <PageContainer>
       <div className="max-w-md mx-auto mb-8 text-center">
@@ -10,7 +21,7 @@ export default function ParticipantLoginPage() {
           Sign in to access your Action Tracks.
         </p>
       </div>
-      <ParticipantLoginForm />
+      <ParticipantLoginForm returnTo={returnTo} />
     </PageContainer>
   );
 }

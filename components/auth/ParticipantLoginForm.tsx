@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
-export function ParticipantLoginForm() {
+export function ParticipantLoginForm({ returnTo = "" }: { returnTo?: string }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +24,7 @@ export function ParticipantLoginForm() {
   return (
     <Card padding="lg" className="max-w-md mx-auto">
       <form action={handleSubmit} className="space-y-5">
+        {returnTo ? <input type="hidden" name="return_to" value={returnTo} /> : null}
         <FormField
           label="Email"
           name="email"
