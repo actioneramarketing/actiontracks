@@ -5,10 +5,15 @@ import {
 } from "@/components/join/TrackJoinView";
 import { getEnrollmentForTrackUser } from "@/lib/actions/enrollments";
 import { getGuideById } from "@/lib/actions/guides";
-import { getFirstStagesForTracks } from "@/lib/actions/stages";
+import { getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
 import { getCurrentUser } from "@/lib/auth/guide";
 import { requireParticipant } from "@/lib/auth/participant";
+import {
+  formatReleaseDateTime,
+  getFirstAvailableStage,
+  getNextUpcomingReleaseAt,
+} from "@/lib/stages/release";
 import { notFound } from "next/navigation";
 
 interface PageProps {
@@ -24,17 +29,21 @@ export default async function TrackJoinPage({ params }: PageProps) {
   }
 
   const joinPath = `/join/${track.slug}`;
-  const [guide, firstStagesResult, user] = await Promise.all([
+  const [guide, stagesResult, user] = await Promise.all([
     track.guide_id ? getGuideById(track.guide_id) : Promise.resolve(null),
-    getFirstStagesForTracks([track.id]),
+    getStagesForTrack(track.id),
     getCurrentUser(),
   ]);
 
-  const firstStageSlug =
-    firstStagesResult.firstStagesByTrackId[track.id]?.slug ?? null;
-  const continueHref = firstStageSlug
-    ? `/track/${track.slug}/stages/${firstStageSlug}`
-    : null;
+  const stages = stagesResult.stages;
+  const firstReleased = getFirstAvailableStage(stages);
+  const continueHref =
+    firstReleased?.slug?.trim()
+      ? `/track/${track.slug}/stages/${firstReleased.slug.trim()}`
+      : null;
+  const waitingReleaseLabel = formatReleaseDateTime(
+    getNextUpcomingReleaseAt(stages)
+  );
 
   const trackView = {
     title: track.title,
@@ -107,10 +116,21 @@ export default async function TrackJoinPage({ params }: PageProps) {
   }
 
   if (enrollment) {
-    if (!continueHref) {
+    if (!stages.length) {
       return (
         <PageContainer>
           <TrackJoinView track={trackView} mode={{ kind: "no_stages" }} />
+        </PageContainer>
+      );
+    }
+
+    if (!continueHref) {
+      return (
+        <PageContainer>
+          <TrackJoinView
+            track={trackView}
+            mode={{ kind: "waiting", releaseLabel: waitingReleaseLabel }}
+          />
         </PageContainer>
       );
     }

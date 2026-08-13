@@ -37,7 +37,7 @@ interface EnrolledTrackCardProps {
 }
 
 export function EnrolledTrackCard({ item }: EnrolledTrackCardProps) {
-  const { track, enrollment, firstStageSlug } = item;
+  const { track, enrollment, firstStageSlug, hasStages, nextReleaseLabel } = item;
   const initials = getTrackInitials(track.title);
   const startLabel = formatDate(enrollment.access_starts_at);
   const endLabel = formatDate(enrollment.access_ends_at);
@@ -104,6 +104,17 @@ export function EnrolledTrackCard({ item }: EnrolledTrackCardProps) {
             <Button href={continueHref} variant="primary" size="sm">
               Continue
             </Button>
+          ) : hasStages ? (
+            <div>
+              <Button type="button" variant="secondary" size="sm" disabled>
+                Starts Soon
+              </Button>
+              {nextReleaseLabel ? (
+                <p className="mt-2 text-xs text-gray-500">
+                  First stage unlocks {nextReleaseLabel}
+                </p>
+              ) : null}
+            </div>
           ) : (
             <Button type="button" variant="secondary" size="sm" disabled>
               No stages yet.

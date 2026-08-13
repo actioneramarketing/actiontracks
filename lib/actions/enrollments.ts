@@ -8,7 +8,12 @@ import {
   isEnrollmentCurrentlyAccessible,
   normalizeEnrollment,
 } from "@/lib/utils/normalize-enrollment";
-import { getFirstStagesForTracks, TrackFirstStagePreview } from "@/lib/actions/stages";
+import { getStagesForTracks } from "@/lib/actions/stages";
+import {
+  formatReleaseDateTime,
+  getFirstAvailableStage,
+  getNextUpcomingReleaseAt,
+} from "@/lib/stages/release";
 
 export interface EnrollmentLookupResult {
   enrollment: ActionTrackEnrollment | null;
@@ -19,6 +24,8 @@ export interface EnrolledTrackView {
   enrollment: ActionTrackEnrollment;
   track: NormalizedActionTrack;
   firstStageSlug: string | null;
+  hasStages: boolean;
+  nextReleaseLabel: string | null;
   currentlyAccessible: boolean;
 }
 
@@ -255,8 +262,8 @@ export async function getEnrolledTracksForParticipant(
     }
   }
 
-  const { firstStagesByTrackId, error: firstStageError } =
-    await getFirstStagesForTracks(trackIds);
+  const { stagesByTrackId, error: stagesError } =
+    await getStagesForTracks(trackIds);
 
   const views: EnrolledTrackView[] = [];
   for (const enrollment of activeEnrollments) {
@@ -265,16 +272,19 @@ export async function getEnrolledTracksForParticipant(
       continue;
     }
 
-    const firstStage: TrackFirstStagePreview | null =
-      firstStagesByTrackId[track.id] ?? null;
+    const stages = stagesByTrackId[track.id] ?? [];
+    const firstAvailable = getFirstAvailableStage(stages);
+    const nextRelease = getNextUpcomingReleaseAt(stages);
 
     views.push({
       enrollment,
       track,
-      firstStageSlug: firstStage?.slug ?? null,
+      firstStageSlug: firstAvailable?.slug?.trim() || null,
+      hasStages: stages.length > 0,
+      nextReleaseLabel: formatReleaseDateTime(nextRelease),
       currentlyAccessible: isEnrollmentCurrentlyAccessible(enrollment),
     });
   }
 
-  return { tracks: views, error: firstStageError };
+  return { tracks: views, error: stagesError };
 }

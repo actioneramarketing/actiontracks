@@ -1,7 +1,8 @@
 "use client";
 
 import { ActionTrackStage } from "@/lib/types/database";
-import { getStageNavigation } from "@/lib/participant/stage-page-model";
+import { getStageNavigation, StageNavLink } from "@/lib/participant/stage-page-model";
+import { formatReleaseDateTime } from "@/lib/stages/release";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { shadowSoft } from "./shared";
@@ -10,6 +11,7 @@ interface ParticipantStageNavigationProps {
   trackSlug: string;
   stage: ActionTrackStage;
   stages: ActionTrackStage[];
+  bypassReleaseGate?: boolean;
 }
 
 function NavButton({
@@ -17,13 +19,15 @@ function NavButton({
   link,
 }: {
   direction: "previous" | "next";
-  link: { stage: ActionTrackStage; href: string } | null;
+  link: StageNavLink | null;
 }) {
   const isPrevious = direction === "previous";
   const label = isPrevious ? "Previous Stage" : "Next Stage";
   const arrow = isPrevious ? "←" : "→";
+  const releaseLabel = link ? formatReleaseDateTime(link.stage.release_at) : null;
 
-  if (!link) {
+  if (!link || link.locked || !link.href) {
+    const lockedNext = Boolean(link?.locked && !isPrevious);
     return (
       <div
         className="flex-1 min-w-0 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
@@ -36,10 +40,16 @@ function NavButton({
             </>
           ) : (
             <>
-              {label} <span aria-hidden="true">{arrow}</span>
+              {lockedNext ? "Next Stage Locked" : label}{" "}
+              <span aria-hidden="true">{arrow}</span>
             </>
           )}
         </p>
+        {lockedNext && releaseLabel ? (
+          <p className="text-xs text-slate-400 mt-1 truncate">
+            Unlocks {releaseLabel}
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -62,6 +72,7 @@ function NavButton({
       </p>
       <p className="text-xs text-slate-500 mt-1 truncate group-hover:text-[#0d9488]">
         Stage {link.stage.stage_number}: {link.stage.title}
+        {link.lockedForParticipants ? " · Locked for participants" : ""}
       </p>
     </Link>
   );
@@ -71,9 +82,12 @@ export function ParticipantStageNavigation({
   trackSlug,
   stage,
   stages,
+  bypassReleaseGate = false,
 }: ParticipantStageNavigationProps) {
   const router = useRouter();
-  const navigation = getStageNavigation(trackSlug, stage, stages);
+  const navigation = getStageNavigation(trackSlug, stage, stages, {
+    bypassReleaseGate,
+  });
   const currentHref =
     navigation.allStages.find((item) => item.stage.id === stage.id)?.href ?? "";
 
@@ -107,8 +121,17 @@ export function ParticipantStageNavigation({
                 className="mt-2 w-full sm:w-auto max-w-full text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-[#14b8a6] focus:border-transparent outline-none"
               >
                 {navigation.allStages.map((item) => (
-                  <option key={item.stage.id} value={item.href}>
+                  <option
+                    key={item.stage.id}
+                    value={item.href ?? ""}
+                    disabled={item.locked || !item.href}
+                  >
                     Stage {item.stage.stage_number}: {item.stage.title}
+                    {item.locked
+                      ? " (Locked)"
+                      : item.lockedForParticipants
+                        ? " (Locked for participants)"
+                        : ""}
                   </option>
                 ))}
               </select>

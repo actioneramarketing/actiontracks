@@ -1,11 +1,12 @@
 "use server";
 
 import { getEnrollmentForTrackUser } from "@/lib/actions/enrollments";
-import { getFirstStagesForTracks } from "@/lib/actions/stages";
+import { getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
 import { ensureParticipantForUser } from "@/lib/actions/participants";
 import { getCurrentUser } from "@/lib/auth/guide";
 import { getParticipantKeyFromCookies } from "@/lib/participant/get-participant-key";
+import { getFirstAvailableStage } from "@/lib/stages/release";
 import { tryCreateAdminClient } from "@/lib/supabase/admin";
 import { ActionTrackEnrollment } from "@/lib/types/database";
 import { normalizeEnrollment } from "@/lib/utils/normalize-enrollment";
@@ -24,11 +25,11 @@ function isActiveEnrollment(enrollment: ActionTrackEnrollment): boolean {
   return enrollment.status.trim().toLowerCase() === "active";
 }
 
-function continuePath(trackSlug: string, firstStageSlug: string | null): string {
-  if (firstStageSlug) {
-    return `/track/${trackSlug}/stages/${firstStageSlug}`;
+function continuePath(trackSlug: string, firstReleasedStageSlug: string | null): string {
+  if (firstReleasedStageSlug) {
+    return `/track/${trackSlug}/stages/${firstReleasedStageSlug}`;
   }
-  return `/join/${trackSlug}`;
+  return "/my-tracks";
 }
 
 async function upsertEnrollmentRow(params: {
@@ -178,7 +179,7 @@ export async function joinActionTrack(
   revalidatePath("/my-tracks");
   revalidatePath(joinPath);
 
-  const { firstStagesByTrackId } = await getFirstStagesForTracks([track.id]);
-  const firstStageSlug = firstStagesByTrackId[track.id]?.slug ?? null;
-  redirect(continuePath(track.slug, firstStageSlug));
+  const { stages } = await getStagesForTrack(track.id);
+  const firstReleased = getFirstAvailableStage(stages);
+  redirect(continuePath(track.slug, firstReleased?.slug?.trim() || null));
 }

@@ -11,6 +11,7 @@ export interface StageCardData {
   whatYoullAccomplish?: string | null;
   nextActionTitle?: string | null;
   isFinalStage?: boolean;
+  releaseLabel: string;
   elements: string[];
 }
 
@@ -36,6 +37,9 @@ export function StageCard({ stage, trackId, isFirst, isLast }: StageCardProps) {
             {stage.isFinalStage && (
               <Badge variant="purple">Final Stage</Badge>
             )}
+            <span className="text-xs font-medium text-gray-500">
+              {stage.releaseLabel}
+            </span>
           </div>
           {summary ? (
             <p className="text-sm text-gray-500">{summary}</p>

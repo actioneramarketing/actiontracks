@@ -17,6 +17,7 @@ import {
   getOptionalParticipantUser,
   getOrCreateParticipantKey,
 } from "@/lib/participant/get-participant-key";
+import { requireStageWriteAccess } from "@/lib/auth/stage-write-access";
 import { revalidatePath } from "next/cache";
 
 function mapCommitmentRow(row: ActionTrackCommitment): ParticipantCommitmentView {
@@ -163,6 +164,11 @@ export async function saveCommitment(
 
     if (!stageRow) {
       return { error: "Stage not found for this track." };
+    }
+
+    const writeAccess = await requireStageWriteAccess(trackId, stageId);
+    if (!writeAccess.ok) {
+      return { error: writeAccess.error };
     }
 
     const settings = asRecord(element.settings_json);

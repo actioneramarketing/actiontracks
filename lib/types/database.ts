@@ -105,6 +105,7 @@ export interface ActionTrackStage {
   unlock_type: string | null;
   is_final_stage: boolean;
   settings_json: Record<string, unknown> | null;
+  release_at: string | null;
   created_at: string;
   updated_at: string;
 }

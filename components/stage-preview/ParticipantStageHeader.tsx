@@ -53,6 +53,7 @@ export function ParticipantStageHeader({
         trackSlug={trackSlug}
         stage={stage}
         stages={stages}
+        bypassReleaseGate={isGuidePreview || isSiteAdminPreview}
       />
 
       <section id="stage-header" className={`bg-white rounded-2xl p-6 sm:p-8 ${shadowSoft}`}>

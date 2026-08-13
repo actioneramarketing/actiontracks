@@ -12,6 +12,7 @@ import {
 import { getElementsForStage } from "@/lib/actions/stage-elements";
 import { getStagesForTrack } from "@/lib/actions/stages";
 import { requireGuideTrackAccess } from "@/lib/auth/guide";
+import { getGuideStageReleaseLabel } from "@/lib/stages/release";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -71,6 +72,7 @@ export default async function StagesListPage({ params }: PageProps) {
         whatYoullAccomplish: stage.what_youll_accomplish,
         nextActionTitle: stage.next_action_title,
         isFinalStage: stage.is_final_stage,
+        releaseLabel: getGuideStageReleaseLabel(stage),
         elements: elementLabels,
       };
     })

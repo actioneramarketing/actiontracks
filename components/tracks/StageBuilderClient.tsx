@@ -6,6 +6,7 @@ import {
   filterBuilderVisibleElements,
 } from "@/lib/constants/element-types";
 import { ActionTrack, ActionTrackStage, StageElement } from "@/lib/types/database";
+import { datetimeLocalToIso, getGuideStageReleaseLabel, toDatetimeLocalValue } from "@/lib/stages/release";
 import { BuilderPageHeader } from "@/components/builder/BuilderPageHeader";
 import { BuilderFormField } from "@/components/builder/BuilderFormField";
 import { FormSection } from "@/components/builder/FormSection";
@@ -39,6 +40,8 @@ export function StageBuilderClient({
 
   async function handleStageSave(formData: FormData) {
     setStageMessage(null);
+    const iso = datetimeLocalToIso(String(formData.get("release_at") ?? ""));
+    formData.set("release_at", iso ?? "");
     startTransition(async () => {
       try {
         await updateStage(stageId, formData);
@@ -133,6 +136,16 @@ export function StageBuilderClient({
                 />
               </FormSection>
 
+              <FormSection title="Scheduling">
+                <BuilderFormField
+                  label="Release Date & Time"
+                  name="release_at"
+                  type="datetime-local"
+                  defaultValue={toDatetimeLocalValue(stage.release_at)}
+                  hint="Leave blank to make this stage available immediately. Set a future date/time to unlock this stage later."
+                />
+              </FormSection>
+
               <FormSection title="Advanced">
                 <BuilderFormField
                   label="Unlock Type"
@@ -199,6 +212,9 @@ export function StageBuilderClient({
                   Final Stage
                 </p>
               ) : null}
+              <p className="text-xs text-gray-500 mt-3">
+                {getGuideStageReleaseLabel(stage)}
+              </p>
               {enabledElements.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {enabledElements.map((el) => (

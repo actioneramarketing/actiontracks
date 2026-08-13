@@ -6,8 +6,64 @@ import {
   tryCreateAdminClient,
 } from "@/lib/supabase/admin";
 import { ActionTrackStage } from "@/lib/types/database";
+import { datetimeLocalToIso, normalizeReleaseAt } from "@/lib/stages/release";
 import { slugify } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
+
+function asString(value: unknown, fallback = ""): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value == null) {
+    return fallback;
+  }
+  return String(value);
+}
+
+function normalizeStage(raw: unknown): ActionTrackStage | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return null;
+  }
+
+  const row = raw as Record<string, unknown>;
+  const id = asString(row.id).trim();
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    track_id: asString(row.track_id),
+    stage_number: Number(row.stage_number) || 0,
+    slug: asString(row.slug),
+    title: asString(row.title),
+    subtitle: asString(row.subtitle) || null,
+    stage_goal: asString(row.stage_goal) || null,
+    stage_summary: asString(row.stage_summary) || null,
+    what_youll_accomplish: asString(row.what_youll_accomplish) || null,
+    next_action_title: asString(row.next_action_title) || null,
+    next_action_description: asString(row.next_action_description) || null,
+    unlock_type: asString(row.unlock_type) || null,
+    is_final_stage: Boolean(row.is_final_stage),
+    settings_json:
+      row.settings_json && typeof row.settings_json === "object" && !Array.isArray(row.settings_json)
+        ? (row.settings_json as Record<string, unknown>)
+        : null,
+    release_at: normalizeReleaseAt(row.release_at),
+    created_at: asString(row.created_at, new Date().toISOString()),
+    updated_at: asString(row.updated_at, new Date().toISOString()),
+  };
+}
+
+function mapStageRows(data: unknown): ActionTrackStage[] {
+  if (!Array.isArray(data)) {
+    const stage = normalizeStage(data);
+    return stage ? [stage] : [];
+  }
+  return data
+    .map((row) => normalizeStage(row))
+    .filter((stage): stage is ActionTrackStage => stage != null);
+}
 
 async function generateUniqueStageSlug(
   trackId: string,
@@ -162,7 +218,7 @@ async function loadOrderedStagesForTrack(
     throw new Error(error.message);
   }
 
-  return (data ?? []) as ActionTrackStage[];
+  return mapStageRows(data);
 }
 
 export async function renumberStages(trackId: string): Promise<void> {
@@ -380,7 +436,7 @@ export async function getStagesForTrack(trackId: string): Promise<{
       return { stages: [], error: error.message };
     }
 
-    return { stages: (data ?? []) as ActionTrackStage[] };
+    return { stages: mapStageRows(data) };
   } catch (error) {
     const message =
       error instanceof SupabaseConfigError
@@ -421,7 +477,7 @@ export async function getFirstStagesForTracks(trackIds: string[]): Promise<{
 
     const { data, error } = await supabase
       .from("action_track_stages")
-      .select("id, track_id, slug, stage_number, created_at")
+      .select("id, track_id, slug, stage_number, created_at, release_at")
       .in("track_id", trackIds);
 
     if (error) {
@@ -468,6 +524,62 @@ export async function getFirstStagesForTracks(trackIds: string[]): Promise<{
   }
 }
 
+export async function getStagesForTracks(trackIds: string[]): Promise<{
+  stagesByTrackId: Record<string, ActionTrackStage[]>;
+  error?: string;
+}> {
+  const stagesByTrackId = Object.fromEntries(
+    trackIds.map((trackId) => [trackId, [] as ActionTrackStage[]])
+  ) as Record<string, ActionTrackStage[]>;
+
+  if (trackIds.length === 0) {
+    return { stagesByTrackId };
+  }
+
+  try {
+    const supabase = tryCreateAdminClient();
+    if (!supabase) {
+      return {
+        stagesByTrackId,
+        error:
+          "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("action_track_stages")
+      .select("*")
+      .in("track_id", trackIds);
+
+    if (error) {
+      return { stagesByTrackId, error: error.message };
+    }
+
+    for (const stage of mapStageRows(data)) {
+      const existing = stagesByTrackId[stage.track_id] ?? [];
+      existing.push(stage);
+      stagesByTrackId[stage.track_id] = existing;
+    }
+
+    for (const trackId of Object.keys(stagesByTrackId)) {
+      stagesByTrackId[trackId] = [...stagesByTrackId[trackId]].sort((a, b) => {
+        if (a.stage_number !== b.stage_number) {
+          return a.stage_number - b.stage_number;
+        }
+        return a.created_at.localeCompare(b.created_at);
+      });
+    }
+
+    return { stagesByTrackId };
+  } catch (error) {
+    const message =
+      error instanceof SupabaseConfigError
+        ? error.message
+        : "Failed to load stages.";
+    return { stagesByTrackId, error: message };
+  }
+}
+
 export async function getStageById(stageId: string): Promise<{
   stage: ActionTrackStage | null;
   error?: string;
@@ -492,7 +604,7 @@ export async function getStageById(stageId: string): Promise<{
       return { stage: null, error: error.message };
     }
 
-    return { stage: (data as ActionTrackStage | null) ?? null };
+    return { stage: normalizeStage(data) };
   } catch (error) {
     const message =
       error instanceof SupabaseConfigError
@@ -527,7 +639,7 @@ export async function getStageBySlug(
       return { stage: null, error: error.message };
     }
 
-    return { stage: (data as ActionTrackStage | null) ?? null };
+    return { stage: normalizeStage(data) };
   } catch (error) {
     const message =
       error instanceof SupabaseConfigError
@@ -551,6 +663,7 @@ function readStageFormFields(formData: FormData) {
       String(formData.get("next_action_description") ?? "").trim() || null,
     unlock_type: String(formData.get("unlock_type") ?? "").trim() || null,
     is_final_stage: formData.get("is_final_stage") === "on",
+    release_at: datetimeLocalToIso(String(formData.get("release_at") ?? "")),
   };
 }
 
@@ -590,6 +703,7 @@ export async function createStage(trackId: string, formData: FormData) {
     next_action_description: fields.next_action_description,
     unlock_type: fields.unlock_type,
     is_final_stage: fields.is_final_stage,
+    release_at: fields.release_at,
   };
 
   const { error } = await supabase.from("action_track_stages").insert(payload);
@@ -623,6 +737,7 @@ export async function updateStage(stageId: string, formData: FormData) {
     next_action_description: fields.next_action_description,
     unlock_type: fields.unlock_type,
     is_final_stage: fields.is_final_stage,
+    release_at: fields.release_at,
     updated_at: new Date().toISOString(),
   };
 

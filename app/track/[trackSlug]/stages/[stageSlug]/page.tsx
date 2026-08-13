@@ -1,4 +1,5 @@
 import { ParticipantStageDashboard } from "@/components/stage-preview/ParticipantStageDashboard";
+import { StageLockedCard } from "@/components/auth/StageLockedCard";
 import { TrackEnrollmentRequiredCard } from "@/components/auth/TrackEnrollmentRequiredCard";
 import {
   getCommitmentsForStage,
@@ -15,6 +16,11 @@ import { getGuideById } from "@/lib/actions/guides";
 import { getStageBySlug, getStagesForTrack } from "@/lib/actions/stages";
 import { getActionTrackBySlug } from "@/lib/actions/tracks";
 import { requireTrackEnrollment } from "@/lib/auth/track-access";
+import {
+  formatReleaseDateTime,
+  getNextAvailableStageLink,
+  isStageReleased,
+} from "@/lib/stages/release";
 import { getStageCommitmentSummary } from "@/lib/utils/commitment";
 import { getSafeReturnPath } from "@/lib/utils/safe-return-path";
 import {
@@ -80,9 +86,23 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     notFound();
   }
 
-  const [{ stages }, { elements: stageElements }, { elements: trackElements }] =
+  const { stages } = await getStagesForTrack(track.id);
+  const bypassReleaseGate =
+    access.type === "preview" || access.type === "site_admin_preview";
+
+  if (!bypassReleaseGate && !isStageReleased(stage)) {
+    return (
+      <StageLockedCard
+        trackTitle={track.title}
+        stageTitle={`Stage ${stage.stage_number}: ${stage.title}`}
+        releaseLabel={formatReleaseDateTime(stage.release_at)}
+        availableStageHref={getNextAvailableStageLink(trackSlug, stages)}
+      />
+    );
+  }
+
+  const [{ elements: stageElements }, { elements: trackElements }] =
     await Promise.all([
-      getStagesForTrack(track.id),
       getElementsForStage(stage.id),
       getEnabledElementsForTrack(track.id),
     ]);

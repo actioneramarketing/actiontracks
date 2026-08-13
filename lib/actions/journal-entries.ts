@@ -12,6 +12,7 @@ import {
   mapJournalEntryRow,
   ParticipantJournalEntryView,
 } from "@/lib/utils/journal-entries";
+import { requireStageWriteAccess } from "@/lib/auth/stage-write-access";
 import { createAdminClient, SupabaseConfigError } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
@@ -78,6 +79,11 @@ async function validateReflectionJournalElement(
 
   if (!stageRow) {
     return { error: "Stage not found for this track." };
+  }
+
+  const writeAccess = await requireStageWriteAccess(trackId, stageId);
+  if (!writeAccess.ok) {
+    return { error: writeAccess.error };
   }
 
   return { element };

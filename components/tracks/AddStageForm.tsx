@@ -5,6 +5,7 @@ import { BuilderFormField } from "@/components/builder/BuilderFormField";
 import { FormSection } from "@/components/builder/FormSection";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { datetimeLocalToIso } from "@/lib/stages/release";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -26,6 +27,8 @@ export function AddStageForm({
   async function handleSubmit(formData: FormData) {
     setError(null);
     setSuccess(null);
+    const iso = datetimeLocalToIso(String(formData.get("release_at") ?? ""));
+    formData.set("release_at", iso ?? "");
     startTransition(async () => {
       try {
         await createStage(trackId, formData);
@@ -99,6 +102,15 @@ export function AddStageForm({
                 placeholder="Brief instructions for the next action"
               />
             </div>
+          </FormSection>
+
+          <FormSection title="Scheduling">
+            <BuilderFormField
+              label="Release Date & Time"
+              name="release_at"
+              type="datetime-local"
+              hint="Leave blank to make this stage available immediately. Set a future date/time to unlock this stage later."
+            />
           </FormSection>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">

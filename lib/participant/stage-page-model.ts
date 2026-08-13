@@ -5,6 +5,7 @@ import {
   StageElement,
 } from "@/lib/types/database";
 import { NormalizedActionTrack } from "@/lib/utils/normalize-action-track";
+import { isStageReleased } from "@/lib/stages/release";
 import {
   asRecord,
   asString,
@@ -32,7 +33,9 @@ export interface SidebarTaskItem {
 
 export interface StageNavLink {
   stage: ActionTrackStage;
-  href: string;
+  href: string | null;
+  locked: boolean;
+  lockedForParticipants: boolean;
 }
 
 export interface StageNavigationState {
@@ -59,10 +62,13 @@ function buildStageHref(trackSlug: string, stage: ActionTrackStage): string | nu
 export function getStageNavigation(
   trackSlug: string,
   currentStage: ActionTrackStage,
-  stages: ActionTrackStage[]
+  stages: ActionTrackStage[],
+  options?: { bypassReleaseGate?: boolean; now?: Date }
 ): StageNavigationState {
   const ordered = getOrderedStages(stages);
   const totalStages = ordered.length;
+  const now = options?.now ?? new Date();
+  const bypassReleaseGate = options?.bypassReleaseGate === true;
 
   const allStages = ordered
     .map((item) => {
@@ -70,7 +76,14 @@ export function getStageNavigation(
       if (!href) {
         return null;
       }
-      return { stage: item, href };
+      const lockedForParticipants = !isStageReleased(item, now);
+      const locked = lockedForParticipants && !bypassReleaseGate;
+      return {
+        stage: item,
+        href: locked ? null : href,
+        locked,
+        lockedForParticipants,
+      };
     })
     .filter((item): item is StageNavLink => item != null);
 
@@ -98,18 +111,18 @@ export function getStageNavigation(
   const nextStage =
     currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null;
 
-  const previousHref = previousStage ? buildStageHref(trackSlug, previousStage) : null;
-  const nextHref = nextStage ? buildStageHref(trackSlug, nextStage) : null;
-
   return {
     currentIndex,
     totalStages,
     stageLabel,
     previous:
-      previousStage && previousHref
-        ? { stage: previousStage, href: previousHref }
+      previousStage
+        ? allStages.find((item) => item.stage.id === previousStage.id) ?? null
         : null,
-    next: nextStage && nextHref ? { stage: nextStage, href: nextHref } : null,
+    next:
+      nextStage
+        ? allStages.find((item) => item.stage.id === nextStage.id) ?? null
+        : null,
     allStages,
   };
 }

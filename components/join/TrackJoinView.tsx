@@ -28,6 +28,7 @@ type TrackJoinViewProps = {
     | { kind: "anonymous" }
     | { kind: "join" }
     | { kind: "continue"; href: string }
+    | { kind: "waiting"; releaseLabel: string | null }
     | { kind: "no_stages" }
     | { kind: "revoked" };
 };
@@ -184,6 +185,22 @@ export function TrackJoinView({ track, mode }: TrackJoinViewProps) {
             <Button href={mode.href} variant="primary" size="lg" className="w-full">
               Continue Action Track
             </Button>
+          ) : null}
+
+          {mode.kind === "waiting" ? (
+            <div className="text-center">
+              <p className="text-sm text-gray-600 leading-relaxed">
+                You&apos;re enrolled. The first stage has not opened yet.
+              </p>
+              {mode.releaseLabel ? (
+                <p className="mt-2 text-sm text-teal-800">
+                  Opens {mode.releaseLabel}
+                </p>
+              ) : null}
+              <Button href="/my-tracks" variant="secondary" className="mt-4">
+                Back to My Tracks
+              </Button>
+            </div>
           ) : null}
 
           {mode.kind === "no_stages" ? (
