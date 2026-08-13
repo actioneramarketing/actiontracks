@@ -32,6 +32,17 @@ export interface GuideProfile {
   updated_at: string;
 }
 
+export interface ActionTrackParticipant {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 /** @deprecated Use GuideProfile */
 export interface ActionTrackGuide {
   id: string;

@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { logout } from "@/lib/actions/auth";
+import { logout, logoutParticipant } from "@/lib/actions/auth";
 import { getCurrentUser, getCurrentGuide } from "@/lib/auth/guide";
+import { getCurrentParticipant } from "@/lib/auth/participant";
 
 export async function Nav() {
   const user = await getCurrentUser();
   const guide = user ? await getCurrentGuide() : null;
+  const participant = user ? await getCurrentParticipant() : null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
@@ -18,7 +20,7 @@ export async function Nav() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6">
+        <nav className="flex flex-wrap items-center justify-end gap-4 sm:gap-6">
           <Link
             href="/library"
             className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
@@ -36,13 +38,23 @@ export async function Nav() {
                   Guide Dashboard
                 </Link>
               ) : null}
-              <Link
-                href="/guide/profile"
-                className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
-              >
-                Guide Profile
-              </Link>
-              <form action={logout}>
+              {participant ? (
+                <Link
+                  href="/my-tracks"
+                  className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+                >
+                  My Tracks
+                </Link>
+              ) : null}
+              {guide ? (
+                <Link
+                  href="/guide/profile"
+                  className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+                >
+                  Guide Profile
+                </Link>
+              ) : null}
+              <form action={guide ? logout : logoutParticipant}>
                 <button
                   type="submit"
                   className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
@@ -52,12 +64,20 @@ export async function Nav() {
               </form>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                href="/participant/login"
+                className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+              >
+                Participant Login
+              </Link>
+              <Link
+                href="/login"
+                className="text-sm font-medium text-gray-600 hover:text-teal-700 transition-colors"
+              >
+                Guide Login
+              </Link>
+            </>
           )}
         </nav>
       </div>
