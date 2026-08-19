@@ -10,8 +10,8 @@ export function SiteAdminLoginRequiredCard() {
           Site Admin Login Required
         </h1>
         <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-          Sign in with an approved internal account to view Action Track join
-          links.
+          Sign in with an approved internal account to access the Site Admin
+          area.
         </p>
         <Button href="/login" variant="primary" className="mt-6">
           Go to Login

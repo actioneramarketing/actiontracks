@@ -41,8 +41,10 @@ export function EnrolledTrackCard({ item }: EnrolledTrackCardProps) {
   const initials = getTrackInitials(track.title);
   const startLabel = formatDate(enrollment.access_starts_at);
   const endLabel = formatDate(enrollment.access_ends_at);
+  const status = enrollment.status.trim().toLowerCase() || "active";
+  const isPaused = status === "paused";
   const continueHref =
-    track.slug.trim() && firstStageSlug
+    !isPaused && track.slug.trim() && firstStageSlug
       ? `/track/${track.slug.trim()}/stages/${firstStageSlug}`
       : null;
 
@@ -85,7 +87,9 @@ export function EnrolledTrackCard({ item }: EnrolledTrackCardProps) {
               {track.title}
             </h3>
           </div>
-          <Badge variant="success">{formatEnrollmentStatus(enrollment.status)}</Badge>
+          <Badge variant={isPaused ? "warning" : "success"}>
+            {formatEnrollmentStatus(enrollment.status)}
+          </Badge>
         </div>
 
         <p className="text-sm text-gray-600 flex-1 mb-4 line-clamp-3">
@@ -100,7 +104,11 @@ export function EnrolledTrackCard({ item }: EnrolledTrackCardProps) {
         )}
 
         <div className="pt-4 border-t border-gray-100 mt-auto">
-          {continueHref ? (
+          {isPaused ? (
+            <Button type="button" variant="secondary" size="sm" disabled>
+              Access paused
+            </Button>
+          ) : continueHref ? (
             <Button href={continueHref} variant="primary" size="sm">
               Continue
             </Button>

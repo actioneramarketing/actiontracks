@@ -3,7 +3,7 @@ import { TrackStatus } from "@/lib/demo-data";
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "default" | "success" | "warning" | "info" | "purple";
+  variant?: "default" | "success" | "warning" | "info" | "purple" | "danger";
   className?: string;
 }
 
@@ -13,6 +13,7 @@ const variantStyles = {
   warning: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
   info: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
   purple: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
+  danger: "bg-red-50 text-red-700 ring-1 ring-red-200",
 };
 
 export function Badge({ children, variant = "default", className }: BadgeProps) {

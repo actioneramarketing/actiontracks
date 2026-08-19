@@ -6,7 +6,7 @@ interface TrackEnrollmentRequiredCardProps {
   trackTitle: string;
   showLogin?: boolean;
   loginHref?: string;
-  variant?: "denied" | "error";
+  variant?: "denied" | "error" | "paused";
 }
 
 export function TrackEnrollmentRequiredCard({
@@ -24,7 +24,9 @@ export function TrackEnrollmentRequiredCard({
         <p className="mt-3 text-sm text-gray-600 leading-relaxed">
           {isError
             ? "We couldn't verify your access to this Action Track. Please try again."
-            : "You don't currently have access to this Action Track."}
+            : variant === "paused"
+              ? "Your access to this Action Track is currently paused."
+              : "You don't currently have access to this Action Track."}
         </p>
         <p className="mt-2 text-sm font-medium text-gray-900">{trackTitle}</p>
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">

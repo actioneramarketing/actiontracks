@@ -222,11 +222,12 @@ export async function getEnrolledTracksForParticipant(
     return { tracks: [], error };
   }
 
-  const activeEnrollments = enrollments.filter(
-    (enrollment) => enrollment.status.trim().toLowerCase() === "active"
-  );
+  const visibleEnrollments = enrollments.filter((enrollment) => {
+    const status = enrollment.status.trim().toLowerCase();
+    return status === "active" || status === "paused";
+  });
 
-  if (activeEnrollments.length === 0) {
+  if (visibleEnrollments.length === 0) {
     return { tracks: [] };
   }
 
@@ -239,7 +240,7 @@ export async function getEnrolledTracksForParticipant(
     };
   }
 
-  const trackIds = [...new Set(activeEnrollments.map((item) => item.track_id))];
+  const trackIds = [...new Set(visibleEnrollments.map((item) => item.track_id))];
   const { data, error: tracksError } = await supabase
     .from("action_tracks")
     .select("*")
@@ -266,7 +267,7 @@ export async function getEnrolledTracksForParticipant(
     await getStagesForTracks(trackIds);
 
   const views: EnrolledTrackView[] = [];
-  for (const enrollment of activeEnrollments) {
+  for (const enrollment of visibleEnrollments) {
     const track = tracksById.get(enrollment.track_id);
     if (!track) {
       continue;

@@ -25,8 +25,14 @@ export async function requireStageWriteAccess(
     }
 
     const access = await requireTrackEnrollment(track);
-    if (access.type === "unauthenticated" || access.type === "denied") {
-      return { ok: false, error: "You don't have access to this Action Track." };
+    if (access.type === "unauthenticated" || access.type === "denied" || access.type === "paused") {
+      return {
+        ok: false,
+        error:
+          access.type === "paused"
+            ? "Your access to this Action Track is currently paused."
+            : "You don't have access to this Action Track.",
+      };
     }
 
     if (access.type === "error") {

@@ -5,13 +5,13 @@ import {
   SiteAdminAccessDeniedCard,
   SiteAdminLoginRequiredCard,
 } from "@/components/auth/SiteAdminAccessCards";
-import { SiteAdminTracksList } from "@/components/site-admin/SiteAdminTracksList";
+import { SiteAdminMembersList } from "@/components/site-admin/SiteAdminMembersList";
 import { SiteAdminSubnav } from "@/components/site-admin/SiteAdminSubnav";
-import { getActionTracksForSiteAdmin } from "@/lib/actions/site-admin-tracks";
+import { getActionTrackMembersForSiteAdmin } from "@/lib/actions/site-admin-members";
 import { getSiteAdminAccess } from "@/lib/auth/site-admin";
 import { Button } from "@/components/ui/Button";
 
-export default async function SiteAdminActionTracksPage() {
+export default async function SiteAdminMembersPage() {
   const access = await getSiteAdminAccess();
 
   if (access.status === "unauthenticated") {
@@ -22,42 +22,41 @@ export default async function SiteAdminActionTracksPage() {
     return <SiteAdminAccessDeniedCard />;
   }
 
-  const { tracks, error } = await getActionTracksForSiteAdmin();
+  const { members, error } = await getActionTrackMembersForSiteAdmin();
 
   return (
     <PageContainer className="max-w-6xl">
       <BuilderPageHeader
-        title="Action Tracks Admin"
-        subtitle="View and copy join links for Action Tracks across all guides."
+        title="Action Track Members"
+        subtitle="View participant enrollments and manage access for each Action Track."
         actions={
-          <Button href="/site-admin/members" variant="secondary" size="sm">
-            Members
+          <Button href="/site-admin/action-tracks" variant="secondary" size="sm">
+            Action Tracks
           </Button>
         }
       />
-      <SiteAdminSubnav current="tracks" />
+      <SiteAdminSubnav current="members" />
 
       {error ? (
         <p className="mb-6 text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
-          Some track details could not be loaded. Join links below may still be
-          usable.
+          Some member details could not be loaded. Please try again.
         </p>
       ) : null}
 
-      {tracks.length === 0 && !error ? (
+      {members.length === 0 && !error ? (
         <EmptyState
-          icon="🎯"
-          title="No Action Tracks yet"
-          description="When guides create Action Tracks, their join and preview links will appear here."
+          icon="👥"
+          title="No enrollments yet"
+          description="When participants join Action Tracks, their enrollments will appear here."
         />
-      ) : tracks.length === 0 ? (
+      ) : members.length === 0 ? (
         <EmptyState
-          icon="🎯"
-          title="Unable to load Action Tracks"
+          icon="👥"
+          title="Unable to load members"
           description="Please try again in a moment."
         />
       ) : (
-        <SiteAdminTracksList tracks={tracks} />
+        <SiteAdminMembersList members={members} />
       )}
     </PageContainer>
   );

@@ -19,6 +19,7 @@ export type TrackAccessResult =
       user: User;
     }
   | { type: "denied" }
+  | { type: "paused" }
   | { type: "error" };
 
 function isGuideOwner(
@@ -84,7 +85,15 @@ async function resolveTrackAccess(
       return { type: "error" };
     }
 
-    if (!enrollment || !isEnrollmentCurrentlyAccessible(enrollment)) {
+    if (!enrollment) {
+      return { type: "denied" };
+    }
+
+    if (enrollment.status.trim().toLowerCase() === "paused") {
+      return { type: "paused" };
+    }
+
+    if (!isEnrollmentCurrentlyAccessible(enrollment)) {
       return { type: "denied" };
     }
 

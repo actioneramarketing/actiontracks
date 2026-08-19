@@ -71,6 +71,15 @@ export default async function ParticipantStagePage({ params }: PageProps) {
     return <TrackEnrollmentRequiredCard trackTitle={track.title} />;
   }
 
+  if (access.type === "paused") {
+    return (
+      <TrackEnrollmentRequiredCard
+        trackTitle={track.title}
+        variant="paused"
+      />
+    );
+  }
+
   if (access.type === "error") {
     return (
       <TrackEnrollmentRequiredCard
